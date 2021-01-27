@@ -16,10 +16,7 @@
 
 package ru.inr.mass.data.proto
 
-import hep.dataforge.context.Context
 import hep.dataforge.io.Envelope
-import hep.dataforge.io.io
-import hep.dataforge.io.readEnvelopeFile
 import hep.dataforge.meta.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.runBlocking
@@ -30,7 +27,6 @@ import ru.inr.mass.data.api.*
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
-import java.nio.file.Path
 import java.time.Duration
 import java.time.Instant
 import java.util.zip.Inflater
@@ -76,7 +72,6 @@ public class ProtoNumassPoint(
 
     public companion object {
 
-
         /**
          * Get valid data stream utilizing compression if it is present
          */
@@ -114,23 +109,9 @@ public class ProtoNumassPoint(
             }
             return proto?.let { ProtoNumassPoint(envelope.meta) { it } }
         }
-
-        public fun fromFile(context: Context, path: Path): ProtoNumassPoint? {
-            val envelope = context.io.readEnvelopeFile(path) ?: error("Envelope could not be read from $path")
-            return fromEnvelope(envelope)
-        }
-
-        public fun fromFile(context: Context, path: String): ProtoNumassPoint? {
-            return fromFile(context,Path.of(path))
-        }
-
-        public fun ofEpochNanos(nanos: Long): Instant {
-            val seconds = Math.floorDiv(nanos, 1e9.toInt().toLong())
-            val reminder = (nanos % 1e9).toInt()
-            return Instant.ofEpochSecond(seconds, reminder.toLong())
-        }
     }
 }
+
 
 public class ProtoBlock(
     override val channel: Int,
@@ -139,7 +120,7 @@ public class ProtoBlock(
 ) : NumassBlock {
 
     override val startTime: Instant
-        get() = ProtoNumassPoint.ofEpochNanos(block.time)
+        get() = epochNanoTime(block.time)
 
     override val length: Duration = when {
         block.length > 0 -> Duration.ofNanos(block.length)

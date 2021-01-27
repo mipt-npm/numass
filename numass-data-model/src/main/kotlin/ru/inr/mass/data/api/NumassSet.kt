@@ -5,7 +5,6 @@
  */
 package ru.inr.mass.data.api
 
-import hep.dataforge.context.Named
 import hep.dataforge.meta.Meta
 import hep.dataforge.meta.get
 import hep.dataforge.meta.long
@@ -13,14 +12,13 @@ import hep.dataforge.names.Name
 import hep.dataforge.names.toName
 import hep.dataforge.provider.Provider
 import java.time.Instant
-import java.util.*
 
 /**
- * A single set of numass points previously called file.
+ * A single set of numass measurements together with metadata.
  *
  * @author [Alexander Nozik](mailto:altavir@gmail.com)
  */
-public interface NumassSet : Named, Iterable<NumassPoint>, Provider {
+public interface NumassSet : Iterable<NumassPoint>, Provider {
 
     public val meta: Meta
 
@@ -32,7 +30,9 @@ public interface NumassSet : Named, Iterable<NumassPoint>, Provider {
      * @return
      */
     public val startTime: Instant
-        get() = meta[NumassPoint.START_TIME_KEY].long?.let { Instant.ofEpochMilli(it) } ?: firstPoint.startTime
+        get() = meta[NumassPoint.START_TIME_KEY].long?.let {
+            Instant.ofEpochMilli(it)
+        } ?: firstPoint.startTime
 
     //suspend fun getHvData(): Table?
 
@@ -44,9 +44,9 @@ public interface NumassSet : Named, Iterable<NumassPoint>, Provider {
     override val defaultTarget: String get() = NUMASS_POINT_PROVIDER_KEY
 
     override fun content(target: String): Map<Name, Any> {
-        return if(target == NUMASS_POINT_PROVIDER_KEY){
-            points.associate { "point[${it.voltage}]".toName() to it }
-        }else {
+        return if (target == NUMASS_POINT_PROVIDER_KEY) {
+            points.associateBy { "point[${it.voltage}]".toName() }
+        } else {
             super.content(target)
         }
     }

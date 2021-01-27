@@ -9,7 +9,7 @@ import hep.dataforge.meta.Meta
 import kotlin.reflect.KClass
 
 public class NumassProtoPlugin : AbstractPlugin() {
-    val io by require(IOPlugin)
+    public val io: IOPlugin by require(IOPlugin)
     override val tag: PluginTag get() = Companion.tag
 
     public companion object : PluginFactory<NumassProtoPlugin> {

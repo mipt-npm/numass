@@ -3,6 +3,10 @@ plugins {
     id("ru.mipt.npm.kscience")
 }
 
+kscience{
+    publish()
+}
+
 val dataforgeVersion: String by rootProject.extra
 
 dependencies {

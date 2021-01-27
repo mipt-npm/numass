@@ -1,10 +1,16 @@
-import com.google.protobuf.gradle.*
+import com.google.protobuf.gradle.proto
+import com.google.protobuf.gradle.protobuf
+import com.google.protobuf.gradle.protoc
 
 plugins {
     java
     kotlin("jvm")
     id("ru.mipt.npm.kscience")
     id("com.google.protobuf") version "0.8.14"
+}
+
+kscience{
+    publish()
 }
 
 val dataforgeVersion: String by rootProject.extra
