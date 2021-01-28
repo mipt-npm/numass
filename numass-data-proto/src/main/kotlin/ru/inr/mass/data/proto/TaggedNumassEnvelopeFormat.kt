@@ -28,15 +28,7 @@ import kotlinx.io.*
 import java.util.*
 
 
-/**
- * A streaming-friendly envelope format with a short binary tag.
- * TODO add description
- */
-public class TaggedNumassEnvelopeFormat(private val io: IOPlugin) : EnvelopeFormat {
-
-//    private val metaFormat = io.metaFormat(metaFormatKey)
-//        ?: error("Meta format with key $metaFormatKey could not be resolved in $io")
-
+internal class TaggedNumassEnvelopeFormat(private val io: IOPlugin) : EnvelopeFormat {
 
     private fun Tag.toBinary() = Binary(24) {
         writeRawString(START_SEQUENCE)

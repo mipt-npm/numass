@@ -35,7 +35,7 @@ import java.util.zip.Inflater
  * Protobuf based numass point
  * Created by Alexander Nozik on 09.07.2017.
  */
-public class ProtoNumassPoint(
+internal class ProtoNumassPoint(
     override val meta: Meta,
     private val protoBuilder: () -> Point,
 ) : NumassPoint {

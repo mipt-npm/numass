@@ -36,7 +36,7 @@ public class NumassDirectorySet internal constructor(
             it.fileName.name.startsWith("p")
         }.map { pointPath ->
             try {
-                context.readNumassFile(pointPath)
+                context.readNumassPointFile(pointPath)
             } catch (e: Exception) {
                 context.logger.error(e) { "Error reading Numass point file $pointPath" }
                 null
@@ -46,12 +46,12 @@ public class NumassDirectorySet internal constructor(
 }
 
 @OptIn(DFExperimental::class)
-public fun Context.readNumassFile(path: Path): ProtoNumassPoint? {
+public fun Context.readNumassPointFile(path: Path): NumassPoint? {
     val envelope = io.readEnvelopeFile(path) ?: error("Envelope could not be read from $path")
     return ProtoNumassPoint.fromEnvelope(envelope)
 }
 
-public fun Context.readNumassFile(path: String): ProtoNumassPoint? = readNumassFile(Path.of(path))
+public fun Context.readNumassPointFile(path: String): NumassPoint? = readNumassPointFile(Path.of(path))
 
 @OptIn(ExperimentalPathApi::class)
 public fun Context.readNumassDirectory(path: Path): NumassDirectorySet {
