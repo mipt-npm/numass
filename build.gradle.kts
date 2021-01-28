@@ -3,11 +3,15 @@ plugins {
 }
 
 allprojects {
+    repositories{
+        mavenLocal()
+    }
+
     group = "ru.inr.mass"
     version = "0.1.0"
 }
 
-val dataforgeVersion by extra("0.3.0-dev-1")
+val dataforgeVersion by extra("0.3.0-dev-2")
 
 apiValidation{
     validationDisabled = true

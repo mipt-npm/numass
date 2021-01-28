@@ -40,20 +40,19 @@ public interface NumassSet : Iterable<NumassPoint>, Provider {
         return points.iterator()
     }
 
-
-    override val defaultTarget: String get() = NUMASS_POINT_PROVIDER_KEY
+    override val defaultTarget: String get() = NUMASS_POINT_TARGET
 
     override fun content(target: String): Map<Name, Any> {
-        return if (target == NUMASS_POINT_PROVIDER_KEY) {
+        return if (target == NUMASS_POINT_TARGET) {
             points.associateBy { "point[${it.voltage}]".toName() }
         } else {
             super.content(target)
         }
     }
 
-    companion object {
-        const val DESCRIPTION_KEY = "info"
-        const val NUMASS_POINT_PROVIDER_KEY = "point"
+    public companion object {
+        //public const val DESCRIPTION_KEY = "info"
+        public const val NUMASS_POINT_TARGET: String = "point"
     }
 }
 

@@ -10,10 +10,7 @@ import ru.inr.mass.data.api.NumassPoint
 import ru.inr.mass.data.api.NumassSet
 import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.io.path.ExperimentalPathApi
-import kotlin.io.path.div
-import kotlin.io.path.exists
-import kotlin.io.path.isDirectory
+import kotlin.io.path.*
 import kotlin.streams.toList
 
 @OptIn(ExperimentalPathApi::class)
@@ -35,7 +32,9 @@ public class NumassDirectorySet internal constructor(
     }
 
     override val points: List<NumassPoint> by lazy<List<NumassPoint>> {
-        Files.list(path).filter { it.fileName.startsWith("p") }.map { pointPath ->
+        Files.list(path).filter {
+            it.fileName.name.startsWith("p")
+        }.map { pointPath ->
             try {
                 context.readNumassFile(pointPath)
             } catch (e: Exception) {
