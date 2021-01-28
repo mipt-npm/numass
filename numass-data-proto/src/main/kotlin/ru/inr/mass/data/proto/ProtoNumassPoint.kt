@@ -37,22 +37,21 @@ import java.util.zip.Inflater
  */
 public class ProtoNumassPoint(
     override val meta: Meta,
-    private val protoBuilder: () -> NumassProto.Point,
+    private val protoBuilder: () -> Point,
 ) : NumassPoint {
 
-    private val proto: NumassProto.Point get() = protoBuilder()
+    private val proto: Point get() = protoBuilder()
 
     override val blocks: List<NumassBlock>
-        get() = proto.channelsList
-            .flatMap { channel ->
-                channel.blocksList
-                    .map { block -> ProtoBlock(channel.id.toInt(), block, this) }
-                    .sortedBy { it.startTime }
-            }
+        get() = proto.channels.flatMap { channel ->
+            channel.blocks
+                .map { block -> ProtoBlock(channel.id.toInt(), block, this) }
+                .sortedBy { it.startTime }
+        }
 
     override val channels: Map<Int, NumassBlock>
-        get() = proto.channelsList.groupBy { it.id.toInt() }.mapValues { entry ->
-            MetaBlock(entry.value.flatMap { it.blocksList }.map { ProtoBlock(entry.key, it, this) })
+        get() = proto.channels.groupBy { it.id.toInt() }.mapValues { entry ->
+            MetaBlock(entry.value.flatMap { it.blocks }.map { ProtoBlock(entry.key, it, this) })
         }
 
     override val voltage: Double get() = meta["external_meta.HV1_value"].double ?: super.voltage
@@ -105,7 +104,7 @@ public class ProtoNumassPoint(
 
         public fun fromEnvelope(envelope: Envelope): ProtoNumassPoint? {
             val proto = envelope.useData {
-                NumassProto.Point.parseFrom(it)
+                Point.ADAPTER.decode(it)
             }
             return proto?.let { ProtoNumassPoint(envelope.meta) { it } }
         }
@@ -115,7 +114,7 @@ public class ProtoNumassPoint(
 
 public class ProtoBlock(
     override val channel: Int,
-    private val block: NumassProto.Point.Channel.Block,
+    private val block: Point.Channel.Block,
     public val parent: NumassPoint? = null,
 ) : NumassBlock {
 
@@ -136,14 +135,20 @@ public class ProtoBlock(
     }
 
     override val events: Flow<NumassEvent>
-        get() = if (block.hasEvents()) {
+        get() = if (block.events != null) {
             val events = block.events
-            if (events.timesCount != events.amplitudesCount) {
+            val amplitudes = events.amplitudes
+            val times = events.times
+
+            if (times.size != amplitudes.size) {
                 LoggerFactory.getLogger(javaClass)
-                    .error("The block is broken. Number of times is ${events.timesCount} and number of amplitudes is ${events.amplitudesCount}")
+                    .error("The block is broken. Number of times is ${times.size} and number of amplitudes is ${amplitudes.size}")
             }
-            (0..events.timesCount).asFlow()
-                .map { i -> NumassEvent(events.getAmplitudes(i).toShort(), events.getTimes(i), this) }
+
+            amplitudes.zip(times) { amp, time ->
+                NumassEvent(amp.toShort(), time, this)
+            }.asFlow()
+
         } else {
             emptyFlow<NumassEvent>()
         }
@@ -151,10 +156,10 @@ public class ProtoBlock(
 
     override val frames: Flow<NumassFrame>
         get() {
-            val tickSize = Duration.ofNanos(block.binSize)
-            return block.framesList.asFlow().map { frame ->
+            val tickSize = Duration.ofNanos(block.bin_size)
+            return block.frames.asFlow().map { frame ->
                 val time = startTime.plusNanos(frame.time)
-                val frameData = frame.data.asReadOnlyByteBuffer()
+                val frameData = frame.data_.asByteBuffer()
                 NumassFrame(time, tickSize, frameData.asShortBuffer())
             }
         }
