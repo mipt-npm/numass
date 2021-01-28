@@ -115,11 +115,16 @@ internal class ProtoNumassPoint(
 public class ProtoBlock(
     override val channel: Int,
     private val block: Point.Channel.Block,
-    public val parent: NumassPoint? = null,
+    parent: NumassPoint? = null,
 ) : NumassBlock {
 
     override val startTime: Instant
-        get() = epochNanoTime(block.time)
+        get(){
+            val nanos = block.time
+            val seconds = Math.floorDiv(nanos, 1e9.toInt().toLong())
+            val reminder = (nanos % 1e9).toInt()
+            return Instant.ofEpochSecond(seconds, reminder.toLong())
+        }
 
     override val length: Duration = when {
         block.length > 0 -> Duration.ofNanos(block.length)
@@ -150,7 +155,7 @@ public class ProtoBlock(
             }.asFlow()
 
         } else {
-            emptyFlow<NumassEvent>()
+            emptyFlow()
         }
 
 
