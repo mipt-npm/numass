@@ -1,14 +1,21 @@
 plugins {
-    kotlin("jvm")
+    kotlin("multiplatform")
     id("ru.mipt.npm.kscience")
 }
 
-kscience{
+kscience {
     publish()
 }
 
 val dataforgeVersion: String by rootProject.extra
 
-dependencies {
-    api("hep.dataforge:dataforge-context:$dataforgeVersion")
+kotlin.sourceSets {
+    commonMain {
+        dependencies {
+            api("hep.dataforge:dataforge-context:$dataforgeVersion")
+            api("org.jetbrains.kotlinx:kotlinx-datetime:0.1.1")
+        }
+    }
 }
+
+

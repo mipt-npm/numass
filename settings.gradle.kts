@@ -36,3 +36,4 @@ pluginManagement {
 
 include("numass-data-model")
 include("numass-data-proto")
+include("numass-workspace")

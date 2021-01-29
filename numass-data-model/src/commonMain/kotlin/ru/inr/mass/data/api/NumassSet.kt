@@ -11,7 +11,7 @@ import hep.dataforge.meta.long
 import hep.dataforge.names.Name
 import hep.dataforge.names.toName
 import hep.dataforge.provider.Provider
-import java.time.Instant
+import kotlinx.datetime.Instant
 
 /**
  * A single set of numass measurements together with metadata.
@@ -31,7 +31,7 @@ public interface NumassSet : Iterable<NumassPoint>, Provider {
      */
     public val startTime: Instant
         get() = meta[NumassPoint.START_TIME_KEY].long?.let {
-            Instant.ofEpochMilli(it)
+            Instant.fromEpochMilliseconds(it)
         } ?: firstPoint.startTime
 
     //suspend fun getHvData(): Table?

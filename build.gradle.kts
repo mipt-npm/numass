@@ -8,7 +8,7 @@ allprojects {
     }
 
     group = "ru.inr.mass"
-    version = "0.1.0"
+    version = "0.1.0-SNAPSHOT"
 }
 
 val dataforgeVersion by extra("0.3.0-dev-2")

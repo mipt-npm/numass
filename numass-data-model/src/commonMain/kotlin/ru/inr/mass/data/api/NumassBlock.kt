@@ -19,8 +19,10 @@ package ru.inr.mass.data.api
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.emptyFlow
-import java.time.Duration
-import java.time.Instant
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.Instant
+import kotlinx.datetime.plus
+import kotlin.time.Duration
 
 public open class OrphanNumassEvent(public val amplitude: Short, public val timeOffset: Long) :
     Comparable<OrphanNumassEvent> {
@@ -46,7 +48,7 @@ public class NumassEvent(amplitude: Short, timeOffset: Long, public val owner: N
 
     public val channel: Int get() = owner.channel
 
-    public val time: Instant get() = owner.startTime.plusNanos(timeOffset)
+    public val time: Instant get() = owner.startTime.plus(timeOffset, DateTimeUnit.NANOSECOND)
 
 }
 
@@ -103,12 +105,14 @@ public class SimpleBlock(
     override val events: Flow<NumassEvent> get() = eventList.asFlow()
 
     public companion object {
-        public suspend fun produce(
-            startTime: Instant,
-            length: Duration,
-            producer: suspend () -> Iterable<OrphanNumassEvent>,
-        ): SimpleBlock {
-            return SimpleBlock(startTime, length, producer())
-        }
+
     }
+}
+
+public suspend fun SimpleBlock(
+    startTime: Instant,
+    length: Duration,
+    producer: suspend () -> Iterable<OrphanNumassEvent>,
+): SimpleBlock {
+    return SimpleBlock(startTime, length, producer())
 }

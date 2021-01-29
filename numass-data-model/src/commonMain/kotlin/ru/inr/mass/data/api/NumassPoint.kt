@@ -22,11 +22,10 @@ import hep.dataforge.names.toName
 import hep.dataforge.provider.Provider
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.flatMap
 import kotlinx.coroutines.flow.flatMapConcat
-import java.time.Duration
-import java.time.Instant
-import java.util.stream.Stream
+import kotlinx.datetime.Instant
+import kotlin.time.Duration
+import kotlin.time.nanoseconds
 
 /**
  * Created by darksnake on 06-Jul-17.
@@ -76,7 +75,7 @@ public interface NumassPoint : ParentBlock, Provider {
      * @return
      */
     override val startTime: Instant
-        get() = meta[START_TIME_KEY]?.long?.let { Instant.ofEpochMilli(it) } ?: firstBlock.startTime
+        get() = meta[START_TIME_KEY]?.long?.let { Instant.fromEpochMilliseconds(it) } ?: firstBlock.startTime
 
     /**
      * Get the length key of meta or calculate length as a sum of block lengths. The latter could be a bit slow
@@ -84,8 +83,7 @@ public interface NumassPoint : ParentBlock, Provider {
      * @return
      */
     override val length: Duration
-        get() = Duration.ofNanos(blocks.stream().filter { it.channel == 0 }.mapToLong { it -> it.length.toNanos() }
-            .sum())
+        get() = blocks.filter { it.channel == 0 }.sumOf { it.length.inNanoseconds }.nanoseconds
 
     /**
      * Get all events it all blocks as a single sequence
@@ -110,6 +108,8 @@ public interface NumassPoint : ParentBlock, Provider {
 
     override val isSequential: Boolean
         get() = channels.size == 1
+
+    override fun toString(): String
 
     public companion object {
         public const val NUMASS_BLOCK_TARGET: String = "block"

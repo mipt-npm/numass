@@ -2,11 +2,10 @@ package ru.inr.mass.data.api
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.flatMap
 import kotlinx.coroutines.flow.flatMapConcat
-import java.time.Duration
-import java.time.Instant
-import java.util.stream.Stream
+import kotlinx.datetime.Instant
+import kotlin.time.Duration
+import kotlin.time.nanoseconds
 
 public interface ParentBlock : NumassBlock {
     public val blocks: List<NumassBlock>
@@ -27,7 +26,7 @@ public class MetaBlock(override val blocks: List<NumassBlock>) : ParentBlock {
         get() = blocks.first().startTime
 
     override val length: Duration
-        get() = Duration.ofNanos(blocks.stream().mapToLong { block -> block.length.toNanos() }.sum())
+        get() = blocks.sumOf { it.length.inNanoseconds }.nanoseconds
 
     override val events: Flow<NumassEvent>
         get() = blocks.sortedBy { it.startTime }.asFlow().flatMapConcat { it.events }

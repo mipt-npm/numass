@@ -20,16 +20,21 @@ import hep.dataforge.io.Envelope
 import hep.dataforge.meta.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.runBlocking
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.Instant
+import kotlinx.datetime.plus
 import kotlinx.io.asInputStream
 import kotlinx.io.readByteArray
+import okio.ByteString
 import org.slf4j.LoggerFactory
 import ru.inr.mass.data.api.*
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
-import java.time.Duration
-import java.time.Instant
 import java.util.zip.Inflater
+import kotlin.time.Duration
+import kotlin.time.milliseconds
+import kotlin.time.nanoseconds
 
 /**
  * Protobuf based numass point
@@ -60,14 +65,15 @@ internal class ProtoNumassPoint(
 
     override val startTime: Instant
         get() = meta["start_time"].long?.let {
-            Instant.ofEpochMilli(it)
+            Instant.fromEpochMilliseconds(it)
         } ?: super.startTime
 
     override val length: Duration
         get() = meta["acquisition_time"].double?.let {
-            Duration.ofMillis((it * 1000).toLong())
+            (it * 1000).toLong().milliseconds
         } ?: super.length
 
+    override fun toString(): String = "ProtoNumassPoint(index = ${index}, hv = $voltage)"
 
     public companion object {
 
@@ -119,23 +125,23 @@ public class ProtoBlock(
 ) : NumassBlock {
 
     override val startTime: Instant
-        get(){
+        get() {
             val nanos = block.time
             val seconds = Math.floorDiv(nanos, 1e9.toInt().toLong())
             val reminder = (nanos % 1e9).toInt()
-            return Instant.ofEpochSecond(seconds, reminder.toLong())
+            return Instant.fromEpochSeconds(seconds, reminder.toLong())
         }
 
     override val length: Duration = when {
-        block.length > 0 -> Duration.ofNanos(block.length)
+        block.length > 0 -> block.length.nanoseconds
         parent?.meta["acquisition_time"] != null ->
-            Duration.ofMillis((parent?.meta["acquisition_time"].double ?: 0.0 * 1000).toLong())
+            (parent?.meta["acquisition_time"].double ?: 0.0 * 1000).milliseconds
         else -> {
             LoggerFactory.getLogger(javaClass)
                 .error("No length information on block. Trying to infer from first and last events")
             val times = runBlocking { events.map { it.timeOffset }.toList() }
             val nanos = (times.maxOrNull()!! - times.minOrNull()!!)
-            Duration.ofNanos(nanos)
+            nanos.nanoseconds
         }
     }
 
@@ -158,14 +164,22 @@ public class ProtoBlock(
             emptyFlow()
         }
 
+    private fun ByteString.toShortArray(): ShortArray{
+        val shortBuffer = asByteBuffer().asShortBuffer()
+        return if(shortBuffer.hasArray()){
+            shortBuffer.array()
+        } else {
+            ShortArray(shortBuffer.limit()){shortBuffer.get(it)}
+        }
+    }
 
     override val frames: Flow<NumassFrame>
         get() {
-            val tickSize = Duration.ofNanos(block.bin_size)
+            val tickSize = block.bin_size.nanoseconds
             return block.frames.asFlow().map { frame ->
-                val time = startTime.plusNanos(frame.time)
-                val frameData = frame.data_.asByteBuffer()
-                NumassFrame(time, tickSize, frameData.asShortBuffer())
+                val time = startTime.plus(frame.time, DateTimeUnit.NANOSECOND)
+                val frameData = frame.data_
+                NumassFrame(time, tickSize, frameData.toShortArray())
             }
         }
 }
