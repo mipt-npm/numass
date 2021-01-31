@@ -23,7 +23,7 @@ public class NumassDirectorySet internal constructor(
     override val meta: Meta by lazy {
         val metaFilePath = path / "meta"
         if (metaFilePath.exists()) {
-            val envelope = context.io.readEnvelopeFile(metaFilePath) ?: error("Envelope could not be read from $metaFilePath")
+            val envelope = context.io.readEnvelopeFile(metaFilePath)
             envelope.meta
         } else {
             context.logger.warn { "Meta file does not exist for Numass set $metaFilePath" }
@@ -31,7 +31,7 @@ public class NumassDirectorySet internal constructor(
         }
     }
 
-    override val points: List<NumassPoint> by lazy<List<NumassPoint>> {
+    override val points: List<NumassPoint> by lazy {
         Files.list(path).filter {
             it.fileName.name.startsWith("p")
         }.map { pointPath ->
@@ -43,11 +43,22 @@ public class NumassDirectorySet internal constructor(
             }
         }.toList().filterNotNull()
     }
+
+    @OptIn(DFExperimental::class)
+    public val hvData: List<HVEntry>? get(){
+        val hvFile = path/"voltage"
+        return if( hvFile.exists()){
+            val envelope = context.io.readEnvelopeFile(hvFile)
+            HVEntry.readEnvelope(envelope)
+        } else {
+            null
+        }
+    }
 }
 
 @OptIn(DFExperimental::class)
 public fun Context.readNumassPointFile(path: Path): NumassPoint? {
-    val envelope = io.readEnvelopeFile(path) ?: error("Envelope could not be read from $path")
+    val envelope = io.readEnvelopeFile(path)
     return ProtoNumassPoint.fromEnvelope(envelope)
 }
 

@@ -1,0 +1,34 @@
+{
+    "imports": [
+        "kscience.plotly.*",
+        "kscience.plotly.models.*",
+        "kscience.plotly.JupyterPlotly",
+        "hep.dataforge.meta.*",
+        "kotlinx.html.*",
+        "ru.inr.mass.workspace.*"
+    ],
+    "repositories": [
+        "*mavenLocal",
+        "https://dl.bintray.com/mipt-npm/dataforge",
+        "https://dl.bintray.com/mipt-npm/kscience",
+        "https://dl.bintray.com/mipt-npm/dev"
+    ],
+    "properties": {
+        "v": "0.1.0-SNAPSHOT"
+    },
+    "link": "https://mipt-npm.jetbrains.space/p/numass/code/numass",
+    "dependencies": [
+        "ru.inr.mass:numass-workspace:$v"
+    ],
+    "init": [
+        "DISPLAY(HTML(JupyterPlotly.loadJs().toString()))",
+        "DISPLAY(HTML(\"<p>Plotly.kt jupyter integration is in the development phase. Expect glitches!</p>\"))"
+    ],
+    "renderers": {
+        "kscience.plotly.HtmlFragment": "HTML($it.toString())",
+        "kscience.plotly.Plot": "HTML(JupyterPlotly.renderPlot($it))",
+        "kscience.plotly.PlotlyFragment": "HTML(JupyterPlotly.renderFragment($it))",
+        "kscience.plotly.PlotlyPage": "HTML(JupyterPlotly.renderPage($it), true)",
+        "ru.inr.mass.data.proto.NumassDirectorySet": "HTML(JupyterPlotly.renderPage(${it.plotlyPage}), true)"
+    }
+}

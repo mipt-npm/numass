@@ -20,7 +20,7 @@ fun NumassPoint.spectrum(): UnivariateHistogram =
 
 fun Collection<NumassPoint>.spectrum(): UnivariateHistogram {
     if (distinctBy { it.voltage }.size != 1) {
-        numass.logger.warn { "Spectrum is generated from points with different hv value: $this" }
+        NUMASS.logger.warn { "Spectrum is generated from points with different hv value: $this" }
     }
 
     return UnivariateHistogram.uniform(1.0) {
@@ -29,5 +29,18 @@ fun Collection<NumassPoint>.spectrum(): UnivariateHistogram {
                 point.events.collect { put(it.channel.toDouble()) }
             }
         }
+    }
+}
+
+/**
+ * Re-shape the spectrum with the increased bin size and range. Throws a error if new bin is smaller than before.
+ */
+fun UnivariateHistogram.reShape(
+    binSize: Int,
+    channelRange: IntRange,
+): UnivariateHistogram = UnivariateHistogram.uniform(binSize.toDouble()) {
+    this@reShape.filter { it.position.toInt() in channelRange }.forEach { bin ->
+        if(bin.size > binSize.toDouble()) error("Can't reShape the spectrum with increased binning")
+        putMany(bin.position, bin.value.toLong())
     }
 }
