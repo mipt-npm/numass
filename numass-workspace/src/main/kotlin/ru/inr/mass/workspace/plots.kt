@@ -5,8 +5,6 @@ import kotlinx.html.h2
 import kscience.kmath.histogram.UnivariateHistogram
 import kscience.kmath.misc.UnstableKMathAPI
 import kscience.plotly.*
-import kscience.plotly.models.Bar
-import kscience.plotly.models.Scatter
 import kscience.plotly.models.Trace
 import ru.inr.mass.data.api.NumassPoint
 import ru.inr.mass.data.proto.HVEntry
@@ -18,41 +16,43 @@ fun Trace.fromSpectrum(histogram: UnivariateHistogram) {
     y.numbers = histogram.map { it.value }
 }
 
-/**
- *
- */
 @OptIn(UnstableKMathAPI::class)
-fun Plot.spectrum(name: String, histogram: UnivariateHistogram): Bar = bar {
+fun Plot.spectrum(name: String, histogram: UnivariateHistogram): Trace = scatter {
     this.name = name
     fromSpectrum(histogram)
 }
 
-fun Plot.amplitudeSpectrum(point: NumassPoint, binSize: Int = 20, range: IntRange = 0..4096, name: String = point.toString()): Bar = bar {
+fun Plot.amplitudeSpectrum(
+    point: NumassPoint,
+    binSize: Int = 20,
+    range: IntRange = 0..2000,
+    name: String = point.toString(),
+): Trace = scatter {
     spectrum(name, point.spectrum().reShape(binSize, range))
 }
 
 /**
  * Generate a plot from hv data
  */
-fun Plot.hvData(data: List<HVEntry>): Scatter = scatter {
+fun Plot.hvData(data: List<HVEntry>): Trace = scatter {
     x.strings = data.map { it.timestamp.toString() }
     y.numbers = data.map { it.value }
 }
 
-fun NumassDirectorySet.plotlyPage(binSize: Int = 20, range: IntRange = 0..4096): PlotlyPage = Plotly.page {
+fun NumassDirectorySet.plotlyPage(binSize: Int = 20, range: IntRange = 0..2000): PlotlyPage = Plotly.page {
     h1 {
         +"Numass point set $path"
     }
-    h2{
+    h2 {
         +"Amplitude spectrum"
     }
     plot {
-        points.forEach {
-            amplitudeSpectrum(it,binSize, range)
+        points.sortedBy { it.index }.forEach {
+            amplitudeSpectrum(it, binSize, range)
         }
     }
-    hvData?.let {entries->
-        h2{
+    getHvData()?.let { entries ->
+        h2 {
             +"HV"
         }
         plot {

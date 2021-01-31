@@ -45,9 +45,9 @@ public class NumassDirectorySet internal constructor(
     }
 
     @OptIn(DFExperimental::class)
-    public val hvData: List<HVEntry>? get(){
-        val hvFile = path/"voltage"
-        return if( hvFile.exists()){
+    public fun getHvData(): List<HVEntry>? {
+        val hvFile = path / "voltage"
+        return if (hvFile.exists()) {
             val envelope = context.io.readEnvelopeFile(hvFile)
             HVEntry.readEnvelope(envelope)
         } else {

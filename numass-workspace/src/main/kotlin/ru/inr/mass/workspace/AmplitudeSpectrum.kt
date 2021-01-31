@@ -14,7 +14,7 @@ import ru.inr.mass.data.api.NumassPoint
 fun NumassPoint.spectrum(): UnivariateHistogram =
     UnivariateHistogram.uniform(1.0) {
         runBlocking {
-            events.collect { put(it.channel.toDouble()) }
+            events.collect { put(it.amplitude.toDouble()) }
         }
     }
 
@@ -26,7 +26,7 @@ fun Collection<NumassPoint>.spectrum(): UnivariateHistogram {
     return UnivariateHistogram.uniform(1.0) {
         runBlocking {
             this@spectrum.forEach { point ->
-                point.events.collect { put(it.channel.toDouble()) }
+                point.events.collect { put(it.amplitude.toDouble()) }
             }
         }
     }
@@ -41,6 +41,6 @@ fun UnivariateHistogram.reShape(
 ): UnivariateHistogram = UnivariateHistogram.uniform(binSize.toDouble()) {
     this@reShape.filter { it.position.toInt() in channelRange }.forEach { bin ->
         if(bin.size > binSize.toDouble()) error("Can't reShape the spectrum with increased binning")
-        putMany(bin.position, bin.value.toLong())
+        putMany(bin.position, bin.value.toInt())
     }
 }

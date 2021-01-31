@@ -11,7 +11,8 @@
         "*mavenLocal",
         "https://dl.bintray.com/mipt-npm/dataforge",
         "https://dl.bintray.com/mipt-npm/kscience",
-        "https://dl.bintray.com/mipt-npm/dev"
+        "https://dl.bintray.com/mipt-npm/dev",
+        "https://kotlin.bintray.com/kotlinx"
     ],
     "properties": {
         "v": "0.1.0-SNAPSHOT"
@@ -29,6 +30,6 @@
         "kscience.plotly.Plot": "HTML(JupyterPlotly.renderPlot($it))",
         "kscience.plotly.PlotlyFragment": "HTML(JupyterPlotly.renderFragment($it))",
         "kscience.plotly.PlotlyPage": "HTML(JupyterPlotly.renderPage($it), true)",
-        "ru.inr.mass.data.proto.NumassDirectorySet": "HTML(JupyterPlotly.renderPage(${it.plotlyPage}), true)"
+        "ru.inr.mass.data.proto.NumassDirectorySet": "HTML(JupyterPlotly.renderPage(${it.plotlyPage()}), true)"
     }
 }
