@@ -16,31 +16,26 @@
 
 package ru.inr.mass.data.api
 
-import hep.dataforge.meta.*
-import hep.dataforge.names.Name
-import hep.dataforge.names.toName
-import hep.dataforge.provider.Provider
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.flatMapConcat
-import kotlinx.datetime.Instant
+import hep.dataforge.meta.Meta
+import hep.dataforge.meta.double
+import hep.dataforge.meta.get
+import hep.dataforge.meta.int
+import kotlinx.coroutines.flow.*
 import kotlin.time.Duration
 import kotlin.time.nanoseconds
 
 /**
  * Created by darksnake on 06-Jul-17.
  */
-public interface NumassPoint : ParentBlock, Provider {
+public interface NumassPoint : ParentBlock {
 
     public val meta: Meta
-
-    override val blocks: List<NumassBlock>
 
     /**
      * Distinct map of channel number to corresponding grouping block
      */
-    public val channels: Map<Int, NumassBlock>
-        get() = blocks.toList().groupBy { it.channel }.mapValues { entry ->
+    public suspend fun getChannels(): Map<Int, NumassBlock> =
+        flowBlocks().toList().groupBy { it.channel }.mapValues { entry ->
             if (entry.value.size == 1) {
                 entry.value.first()
             } else {
@@ -48,66 +43,35 @@ public interface NumassPoint : ParentBlock, Provider {
             }
         }
 
-    override fun content(target: String): Map<Name, Any> = when (target) {
-        NUMASS_BLOCK_TARGET -> blocks.mapIndexed { index, numassBlock ->
-            "block[$index]".toName() to numassBlock
-        }.toMap()
-        NUMASS_CHANNEL_TARGET -> channels.mapKeys { "channel[${it.key}]".toName() }
-        else -> super.content(target)
-    }
-
     /**
      * Get the voltage setting for the point
-     *
-     * @return
      */
     public val voltage: Double get() = meta[HV_KEY].double ?: 0.0
 
     /**
      * Get the index for this point in the set
-     * @return
      */
     public val index: Int get() = meta[INDEX_KEY].int ?: -1
 
     /**
-     * Get the starting time from meta or from first block
-     *
-     * @return
-     */
-    override val startTime: Instant
-        get() = meta[START_TIME_KEY]?.long?.let { Instant.fromEpochMilliseconds(it) } ?: firstBlock.startTime
-
-    /**
      * Get the length key of meta or calculate length as a sum of block lengths. The latter could be a bit slow
-     *
-     * @return
      */
-    override val length: Duration
-        get() = blocks.filter { it.channel == 0 }.sumOf { it.length.inNanoseconds }.nanoseconds
+    override suspend fun getLength(): Duration =
+        flowBlocks().filter { it.channel == 0 }.toList().sumOf { it.getLength().inNanoseconds }.nanoseconds
 
     /**
      * Get all events it all blocks as a single sequence
-     *
-     *
      * Some performance analysis of different stream concatenation approaches is given here: https://www.techempower.com/blog/2016/10/19/efficient-multiple-stream-concatenation-in-java/
-     *
-     *
-     * @return
      */
-    override val events: Flow<NumassEvent>
-        get() = blocks.asFlow().flatMapConcat { it.events }
+    override val events: Flow<NumassEvent> get() = flowBlocks().flatMapConcat { it.events }
 
     /**
      * Get all frames in all blocks as a single sequence
-     *
-     * @return
      */
-    override val frames: Flow<NumassFrame>
-        get() = blocks.asFlow().flatMapConcat { it.frames }
+    override val frames: Flow<NumassFrame> get() = flowBlocks().flatMapConcat { it.frames }
 
 
-    override val isSequential: Boolean
-        get() = channels.size == 1
+    public suspend fun isSequential(): Boolean = getChannels().size == 1
 
     override fun toString(): String
 
@@ -126,5 +90,5 @@ public interface NumassPoint : ParentBlock, Provider {
  * Get the first block if it exists. Throw runtime exception otherwise.
  *
  */
-public val NumassPoint.firstBlock: NumassBlock
-    get() = blocks.firstOrNull() ?: throw RuntimeException("The point is empty")
+public suspend fun NumassPoint.getFirstBlock(): NumassBlock =
+    flowBlocks().firstOrNull() ?: throw RuntimeException("The point is empty")

@@ -39,19 +39,19 @@ fun Plot.hvData(data: List<HVEntry>): Trace = scatter {
     y.numbers = data.map { it.value }
 }
 
-fun NumassDirectorySet.plotlyPage(binSize: Int = 20, range: IntRange = 0..2000): PlotlyPage = Plotly.page {
+fun Plotly.numassDirectory(set: NumassDirectorySet, binSize: Int = 20, range: IntRange = 0..2000): PlotlyPage = Plotly.page {
     h1 {
-        +"Numass point set $path"
+        +"Numass point set ${set.path}"
     }
     h2 {
         +"Amplitude spectrum"
     }
     plot {
-        points.sortedBy { it.index }.forEach {
+        set.points.sortedBy { it.index }.forEach {
             amplitudeSpectrum(it, binSize, range)
         }
     }
-    getHvData()?.let { entries ->
+    set.getHvData()?.let { entries ->
         h2 {
             +"HV"
         }

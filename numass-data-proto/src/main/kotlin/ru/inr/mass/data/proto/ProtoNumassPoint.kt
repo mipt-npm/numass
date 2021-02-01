@@ -45,18 +45,17 @@ internal class ProtoNumassPoint(
     private val protoBuilder: () -> Point,
 ) : NumassPoint {
 
-    private val proto: Point get() = protoBuilder()
+    val point by lazy(protoBuilder)
 
-    override val blocks: List<NumassBlock>
-        get() = proto.channels.flatMap { channel ->
-            channel.blocks
-                .map { block -> ProtoBlock(channel.id.toInt(), block, this) }
-                .sortedBy { it.startTime }
-        }
+    override fun flowBlocks() = point.channels.flatMap { channel ->
+        channel.blocks
+            .map { block -> ProtoNumassBlock(channel.id.toInt(), block, this) }
+            .sortedBy { it.startTime }
+    }.asFlow()
 
-    override val channels: Map<Int, NumassBlock>
-        get() = proto.channels.groupBy { it.id.toInt() }.mapValues { entry ->
-            MetaBlock(entry.value.flatMap { it.blocks }.map { ProtoBlock(entry.key, it, this) })
+    override suspend fun getChannels(): Map<Int, NumassBlock> =
+        point.channels.groupBy { it.id.toInt() }.mapValues { entry ->
+            MetaBlock(entry.value.flatMap { it.blocks }.map { ProtoNumassBlock(entry.key, it, this) })
         }
 
     override val voltage: Double get() = meta["external_meta.HV1_value"].double ?: super.voltage
@@ -66,12 +65,11 @@ internal class ProtoNumassPoint(
     override val startTime: Instant
         get() = meta["start_time"].long?.let {
             Instant.fromEpochMilliseconds(it)
-        } ?: super.startTime
+        } ?: Instant.DISTANT_PAST
 
-    override val length: Duration
-        get() = meta["acquisition_time"].double?.let {
-            (it * 1000).toLong().milliseconds
-        } ?: super.length
+    override suspend fun getLength(): Duration = meta["acquisition_time"].double?.let {
+        (it * 1000).toLong().milliseconds
+    } ?: super.getLength()
 
     override fun toString(): String = "ProtoNumassPoint(index = ${index}, hv = $voltage)"
 
@@ -118,10 +116,10 @@ internal class ProtoNumassPoint(
 }
 
 
-public class ProtoBlock(
+public class ProtoNumassBlock(
     override val channel: Int,
     private val block: Point.Channel.Block,
-    parent: NumassPoint? = null,
+    private val parent: NumassPoint? = null,
 ) : NumassBlock {
 
     override val startTime: Instant
@@ -132,7 +130,7 @@ public class ProtoBlock(
             return Instant.fromEpochSeconds(seconds, reminder.toLong())
         }
 
-    override val length: Duration = when {
+    override suspend fun getLength(): Duration = when {
         block.length > 0 -> block.length.nanoseconds
         parent?.meta["acquisition_time"] != null ->
             (parent?.meta["acquisition_time"].double ?: 0.0 * 1000).milliseconds
@@ -164,12 +162,12 @@ public class ProtoBlock(
             emptyFlow()
         }
 
-    private fun ByteString.toShortArray(): ShortArray{
+    private fun ByteString.toShortArray(): ShortArray {
         val shortBuffer = asByteBuffer().asShortBuffer()
-        return if(shortBuffer.hasArray()){
+        return if (shortBuffer.hasArray()) {
             shortBuffer.array()
         } else {
-            ShortArray(shortBuffer.limit()){shortBuffer.get(it)}
+            ShortArray(shortBuffer.limit()) { shortBuffer.get(it) }
         }
     }
 

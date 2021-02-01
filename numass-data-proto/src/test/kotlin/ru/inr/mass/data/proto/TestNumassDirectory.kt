@@ -22,7 +22,7 @@ class TestNumassDirectory {
         assertEquals(ListValue.EMPTY, testSet.meta["comments"].value)
         assertEquals(31, testSet.points.size)
         val point22 = testSet.points.find { it.index == 22 }!!
-        point22.blocks
+        point22.flowBlocks()
         assertEquals("2018-04-13T21:56:09", point22.meta["end_time"].string)
     }
 }

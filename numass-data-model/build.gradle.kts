@@ -13,6 +13,7 @@ kotlin.sourceSets {
     commonMain {
         dependencies {
             api("hep.dataforge:dataforge-context:$dataforgeVersion")
+            api("hep.dataforge:dataforge-data:$dataforgeVersion")
             api("org.jetbrains.kotlinx:kotlinx-datetime:0.1.1")
         }
     }

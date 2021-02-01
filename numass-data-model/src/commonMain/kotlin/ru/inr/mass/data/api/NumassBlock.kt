@@ -24,8 +24,10 @@ import kotlinx.datetime.Instant
 import kotlinx.datetime.plus
 import kotlin.time.Duration
 
-public open class OrphanNumassEvent(public val amplitude: Short, public val timeOffset: Long) :
-    Comparable<OrphanNumassEvent> {
+public open class OrphanNumassEvent(
+    public val amplitude: Short,
+    public val timeOffset: Long,
+) : Comparable<OrphanNumassEvent> {
     public operator fun component1(): Short = amplitude
     public operator fun component2(): Long = timeOffset
 
@@ -43,14 +45,15 @@ public open class OrphanNumassEvent(public val amplitude: Short, public val time
  * @property owner an owner block for this event
  *
  */
-public class NumassEvent(amplitude: Short, timeOffset: Long, public val owner: NumassBlock) :
-    OrphanNumassEvent(amplitude, timeOffset) {
+public class NumassEvent(
+    amplitude: Short,
+    timeOffset: Long,
+    public val owner: NumassBlock,
+) : OrphanNumassEvent(amplitude, timeOffset)
 
-    public val channel: Int get() = owner.channel
+public val NumassEvent.channel: Int get() = owner.channel
 
-    public val time: Instant get() = owner.startTime.plus(timeOffset, DateTimeUnit.NANOSECOND)
-
-}
+public fun NumassEvent.getTime(): Instant = owner.startTime.plus(timeOffset, DateTimeUnit.NANOSECOND)
 
 
 /**
@@ -69,7 +72,7 @@ public interface NumassBlock {
     /**
      * The length of the block
      */
-    public val length: Duration
+    public suspend fun getLength(): Duration
 
     /**
      * Stream of isolated events. Could be empty
@@ -94,9 +97,11 @@ public fun OrphanNumassEvent.adopt(parent: NumassBlock): NumassEvent {
  */
 public class SimpleBlock(
     override val startTime: Instant,
-    override val length: Duration,
+    private val length: Duration,
     rawEvents: Iterable<OrphanNumassEvent>,
 ) : NumassBlock {
+
+    override suspend fun getLength(): Duration = length
 
     private val eventList by lazy { rawEvents.map { it.adopt(this) } }
 

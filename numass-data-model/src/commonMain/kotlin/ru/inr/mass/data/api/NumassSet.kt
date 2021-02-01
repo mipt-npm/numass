@@ -29,10 +29,9 @@ public interface NumassSet : Iterable<NumassPoint>, Provider {
      *
      * @return
      */
-    public val startTime: Instant
-        get() = meta[NumassPoint.START_TIME_KEY].long?.let {
-            Instant.fromEpochMilliseconds(it)
-        } ?: firstPoint.startTime
+    public suspend fun getStartTime(): Instant = meta[NumassPoint.START_TIME_KEY].long?.let {
+        Instant.fromEpochMilliseconds(it)
+    } ?: firstPoint.startTime
 
     //suspend fun getHvData(): Table?
 

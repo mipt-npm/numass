@@ -6,17 +6,21 @@ import hep.dataforge.context.logger
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.runBlocking
 import kscience.kmath.histogram.UnivariateHistogram
+import kscience.kmath.structures.RealBuffer
+import kscience.kmath.structures.asBuffer
 import ru.inr.mass.data.api.NumassPoint
 
 /**
  * Build an amplitude spectrum
  */
-fun NumassPoint.spectrum(): UnivariateHistogram =
-    UnivariateHistogram.uniform(1.0) {
-        runBlocking {
-            events.collect { put(it.amplitude.toDouble()) }
-        }
+fun NumassPoint.spectrum(): UnivariateHistogram = UnivariateHistogram.uniform(1.0) {
+    runBlocking {
+        events.collect { put(it.amplitude.toDouble()) }
     }
+}
+
+operator fun UnivariateHistogram.component1(): RealBuffer = map {it.position}.toDoubleArray().asBuffer()
+operator fun UnivariateHistogram.component2(): RealBuffer = map { it.value }.toDoubleArray().asBuffer()
 
 fun Collection<NumassPoint>.spectrum(): UnivariateHistogram {
     if (distinctBy { it.voltage }.size != 1) {
