@@ -1,11 +1,11 @@
 package ru.inr.mass.data.proto
 
-import hep.dataforge.context.Context
-import hep.dataforge.meta.get
-import hep.dataforge.meta.string
-import hep.dataforge.meta.value
-import hep.dataforge.values.ListValue
 import org.junit.jupiter.api.Test
+import space.kscience.dataforge.context.Context
+import space.kscience.dataforge.meta.get
+import space.kscience.dataforge.meta.string
+import space.kscience.dataforge.meta.value
+import space.kscience.dataforge.values.ListValue
 import java.nio.file.Path
 import kotlin.test.assertEquals
 

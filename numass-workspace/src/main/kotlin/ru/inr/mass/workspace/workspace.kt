@@ -1,7 +1,7 @@
 package ru.inr.mass.workspace
 
-import hep.dataforge.workspace.Workspace
 import ru.inr.mass.data.proto.NumassProtoPlugin
+import space.kscience.dataforge.workspace.Workspace
 
 val NUMASS = Workspace {
     context("NUMASS") {

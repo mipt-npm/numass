@@ -2,18 +2,19 @@ package ru.inr.mass.workspace
 
 import kotlinx.html.h1
 import kotlinx.html.h2
-import kscience.kmath.histogram.UnivariateHistogram
-import kscience.kmath.misc.UnstableKMathAPI
-import kscience.plotly.*
-import kscience.plotly.models.Trace
 import ru.inr.mass.data.api.NumassPoint
 import ru.inr.mass.data.proto.HVEntry
 import ru.inr.mass.data.proto.NumassDirectorySet
+import space.kscience.kmath.histogram.UnivariateHistogram
+import space.kscience.kmath.histogram.center
+import space.kscience.kmath.misc.UnstableKMathAPI
+import space.kscience.plotly.*
+import space.kscience.plotly.models.Trace
 
 @OptIn(UnstableKMathAPI::class)
 fun Trace.fromSpectrum(histogram: UnivariateHistogram) {
-    x.numbers = histogram.map { it.position }
-    y.numbers = histogram.map { it.value }
+    x.numbers = histogram.bins.map { it.domain.center }
+    y.numbers = histogram.bins.map { it.value }
 }
 
 @OptIn(UnstableKMathAPI::class)

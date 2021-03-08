@@ -1,14 +1,16 @@
-@file:Suppress("EXPERIMENTAL_API_USAGE")
-
 package ru.inr.mass.workspace
 
-import hep.dataforge.context.logger
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.runBlocking
-import kscience.kmath.histogram.UnivariateHistogram
-import kscience.kmath.structures.RealBuffer
-import kscience.kmath.structures.asBuffer
 import ru.inr.mass.data.api.NumassPoint
+import space.kscience.dataforge.context.logger
+import space.kscience.dataforge.context.warn
+import space.kscience.kmath.histogram.UnivariateHistogram
+import space.kscience.kmath.histogram.center
+import space.kscience.kmath.histogram.put
+import space.kscience.kmath.structures.RealBuffer
+import space.kscience.kmath.structures.asBuffer
+
 
 /**
  * Build an amplitude spectrum
@@ -19,8 +21,8 @@ fun NumassPoint.spectrum(): UnivariateHistogram = UnivariateHistogram.uniform(1.
     }
 }
 
-operator fun UnivariateHistogram.component1(): RealBuffer = map {it.position}.toDoubleArray().asBuffer()
-operator fun UnivariateHistogram.component2(): RealBuffer = map { it.value }.toDoubleArray().asBuffer()
+operator fun UnivariateHistogram.component1(): RealBuffer = bins.map { it.domain.center }.toDoubleArray().asBuffer()
+operator fun UnivariateHistogram.component2(): RealBuffer = bins.map { it.value }.toDoubleArray().asBuffer()
 
 fun Collection<NumassPoint>.spectrum(): UnivariateHistogram {
     if (distinctBy { it.voltage }.size != 1) {
@@ -43,8 +45,8 @@ fun UnivariateHistogram.reShape(
     binSize: Int,
     channelRange: IntRange,
 ): UnivariateHistogram = UnivariateHistogram.uniform(binSize.toDouble()) {
-    this@reShape.filter { it.position.toInt() in channelRange }.forEach { bin ->
-        if(bin.size > binSize.toDouble()) error("Can't reShape the spectrum with increased binning")
-        putMany(bin.position, bin.value.toInt())
+    this@reShape.bins.filter { it.domain.center.toInt() in channelRange }.forEach { bin ->
+        if (bin.domain.volume() > binSize.toDouble()) error("Can't reShape the spectrum with increased binning")
+        putValue(bin.domain.center, bin.value)
     }
 }

@@ -16,11 +16,11 @@
 
 package ru.inr.mass.data.api
 
-import hep.dataforge.meta.Meta
-import hep.dataforge.meta.double
-import hep.dataforge.meta.get
-import hep.dataforge.meta.int
 import kotlinx.coroutines.flow.*
+import space.kscience.dataforge.meta.Meta
+import space.kscience.dataforge.meta.double
+import space.kscience.dataforge.meta.get
+import space.kscience.dataforge.meta.int
 import kotlin.time.Duration
 import kotlin.time.nanoseconds
 

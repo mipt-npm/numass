@@ -1,14 +1,14 @@
 package ru.inr.mass.workspace
 
-import hep.dataforge.data.ActiveDataTree
-import hep.dataforge.data.DataTree
-import hep.dataforge.data.emitStatic
-import hep.dataforge.names.Name
-import hep.dataforge.names.NameToken
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import ru.inr.mass.data.proto.NumassDirectorySet
 import ru.inr.mass.data.proto.readNumassDirectory
+import space.kscience.dataforge.data.ActiveDataTree
+import space.kscience.dataforge.data.DataTree
+import space.kscience.dataforge.data.static
+import space.kscience.dataforge.names.Name
+import space.kscience.dataforge.names.NameToken
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.ExperimentalPathApi
@@ -31,7 +31,7 @@ suspend fun readNumassRepository(path: String): DataTree<NumassDirectorySet> = A
                 NameToken(segment.fileName.toString())
             })
             val value = NUMASS.context.readNumassDirectory(childPath)
-            emitStatic(name, value, value.meta)
+            static(name, value, value.meta)
         }
     }
     //TODO add file watcher

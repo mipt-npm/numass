@@ -1,9 +1,9 @@
 package ru.inr.mass.data.api
 
-import hep.dataforge.meta.Meta
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.datetime.Instant
+import space.kscience.dataforge.meta.Meta
 
 /**
  * A simple static implementation of NumassPoint

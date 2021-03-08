@@ -1,13 +1,15 @@
 package ru.inr.mass.data.proto
 
-import hep.dataforge.context.Context
-import hep.dataforge.context.logger
-import hep.dataforge.io.io
-import hep.dataforge.io.readEnvelopeFile
-import hep.dataforge.meta.DFExperimental
-import hep.dataforge.meta.Meta
 import ru.inr.mass.data.api.NumassPoint
 import ru.inr.mass.data.api.NumassSet
+import space.kscience.dataforge.context.Context
+import space.kscience.dataforge.context.error
+import space.kscience.dataforge.context.logger
+import space.kscience.dataforge.context.warn
+import space.kscience.dataforge.io.io
+import space.kscience.dataforge.io.readEnvelopeFile
+import space.kscience.dataforge.meta.Meta
+import space.kscience.dataforge.misc.DFExperimental
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.*

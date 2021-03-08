@@ -16,15 +16,15 @@
 
 package ru.inr.mass.data.proto
 
-import hep.dataforge.context.Context
-import hep.dataforge.io.*
-import hep.dataforge.meta.Meta
-import hep.dataforge.meta.get
-import hep.dataforge.meta.string
-import hep.dataforge.names.Name
-import hep.dataforge.names.plus
-import hep.dataforge.names.toName
-import kotlinx.io.*
+import io.ktor.utils.io.core.*
+import space.kscience.dataforge.context.Context
+import space.kscience.dataforge.io.*
+import space.kscience.dataforge.meta.Meta
+import space.kscience.dataforge.meta.get
+import space.kscience.dataforge.meta.string
+import space.kscience.dataforge.names.Name
+import space.kscience.dataforge.names.plus
+import space.kscience.dataforge.names.toName
 import java.util.*
 
 
@@ -71,7 +71,7 @@ internal class TaggedNumassEnvelopeFormat(private val io: IOPlugin) : EnvelopeFo
         val metaFormat = io.resolveMetaFormat(tag.metaFormatKey)
             ?: error("Meta format with key ${tag.metaFormatKey} not found")
 
-        val meta: Meta = metaFormat.readObject(input.limit(tag.metaSize.toInt()))
+        val meta: Meta = metaFormat.readObject(input.readBinary(tag.metaSize.toInt()))
 
         val data = input.readBinary(tag.dataSize.toInt())
 
@@ -88,7 +88,7 @@ internal class TaggedNumassEnvelopeFormat(private val io: IOPlugin) : EnvelopeFo
                 ?: error("Meta format with key ${tag.metaFormatKey} not found")
         }
 
-        val meta: Meta = metaFormat.readObject(input.limit(tag.metaSize.toInt()))
+        val meta: Meta = metaFormat.readObject(input.readBinary(tag.metaSize.toInt()))
 
 
         return PartialEnvelope(meta, 30u + tag.metaSize, tag.dataSize)
@@ -134,9 +134,9 @@ internal class TaggedNumassEnvelopeFormat(private val io: IOPlugin) : EnvelopeFo
             return Tag(metaFormatKey, metaLength, dataLength)
         }
 
-        override fun peekFormat(io: IOPlugin, input: Input): EnvelopeFormat? {
+        override fun peekFormat(io: IOPlugin, binary: Binary): EnvelopeFormat? {
             return try {
-                input.preview {
+                binary.read {
                     val header = readRawString(30)
                     if (header.startsWith(START_SEQUENCE) && header.endsWith(END_SEQUENCE)) {
                         TaggedNumassEnvelopeFormat(io)

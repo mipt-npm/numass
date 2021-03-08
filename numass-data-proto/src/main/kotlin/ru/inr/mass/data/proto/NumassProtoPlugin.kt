@@ -1,13 +1,13 @@
 package ru.inr.mass.data.proto
 
-import hep.dataforge.context.AbstractPlugin
-import hep.dataforge.context.Context
-import hep.dataforge.context.PluginFactory
-import hep.dataforge.context.PluginTag
-import hep.dataforge.io.EnvelopeFormatFactory
-import hep.dataforge.io.IOPlugin
-import hep.dataforge.meta.Meta
-import hep.dataforge.names.Name
+import space.kscience.dataforge.context.AbstractPlugin
+import space.kscience.dataforge.context.Context
+import space.kscience.dataforge.context.PluginFactory
+import space.kscience.dataforge.context.PluginTag
+import space.kscience.dataforge.io.EnvelopeFormatFactory
+import space.kscience.dataforge.io.IOPlugin
+import space.kscience.dataforge.meta.Meta
+import space.kscience.dataforge.names.Name
 import kotlin.reflect.KClass
 
 public class NumassProtoPlugin : AbstractPlugin() {

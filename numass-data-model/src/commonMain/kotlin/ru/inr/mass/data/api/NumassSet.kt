@@ -5,13 +5,13 @@
  */
 package ru.inr.mass.data.api
 
-import hep.dataforge.meta.Meta
-import hep.dataforge.meta.get
-import hep.dataforge.meta.long
-import hep.dataforge.names.Name
-import hep.dataforge.names.toName
-import hep.dataforge.provider.Provider
 import kotlinx.datetime.Instant
+import space.kscience.dataforge.meta.Meta
+import space.kscience.dataforge.meta.get
+import space.kscience.dataforge.meta.long
+import space.kscience.dataforge.names.Name
+import space.kscience.dataforge.names.toName
+import space.kscience.dataforge.provider.Provider
 
 /**
  * A single set of numass measurements together with metadata.

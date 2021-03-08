@@ -16,18 +16,17 @@
 
 package ru.inr.mass.data.proto
 
-import hep.dataforge.io.Envelope
-import hep.dataforge.meta.*
+import io.ktor.utils.io.core.readBytes
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.Instant
 import kotlinx.datetime.plus
-import kotlinx.io.asInputStream
-import kotlinx.io.readByteArray
 import okio.ByteString
 import org.slf4j.LoggerFactory
 import ru.inr.mass.data.api.*
+import space.kscience.dataforge.io.Envelope
+import space.kscience.dataforge.meta.*
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
@@ -85,7 +84,7 @@ internal class ProtoNumassPoint(
                 val inflater = Inflater()
 
                 val array: ByteArray = data?.read {
-                    readByteArray()
+                    readBytes()
                 } ?: ByteArray(0)
 
                 inflater.setInput(array)
