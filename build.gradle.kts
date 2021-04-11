@@ -13,7 +13,7 @@ allprojects {
 }
 
 val dataforgeVersion by extra("0.4.0-dev-2")
-val kmathVersion by extra("0.2.1")
+val kmathVersion by extra("0.3.0-dev-3")
 
 apiValidation{
     validationDisabled = true

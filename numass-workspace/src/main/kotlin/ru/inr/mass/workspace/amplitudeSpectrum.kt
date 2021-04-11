@@ -8,7 +8,7 @@ import space.kscience.dataforge.context.warn
 import space.kscience.kmath.histogram.UnivariateHistogram
 import space.kscience.kmath.histogram.center
 import space.kscience.kmath.histogram.put
-import space.kscience.kmath.structures.RealBuffer
+import space.kscience.kmath.structures.DoubleBuffer
 import space.kscience.kmath.structures.asBuffer
 
 
@@ -21,8 +21,8 @@ fun NumassPoint.spectrum(): UnivariateHistogram = UnivariateHistogram.uniform(1.
     }
 }
 
-operator fun UnivariateHistogram.component1(): RealBuffer = bins.map { it.domain.center }.toDoubleArray().asBuffer()
-operator fun UnivariateHistogram.component2(): RealBuffer = bins.map { it.value }.toDoubleArray().asBuffer()
+operator fun UnivariateHistogram.component1(): DoubleBuffer = bins.map { it.domain.center }.toDoubleArray().asBuffer()
+operator fun UnivariateHistogram.component2(): DoubleBuffer = bins.map { it.value }.toDoubleArray().asBuffer()
 
 fun Collection<NumassPoint>.spectrum(): UnivariateHistogram {
     if (distinctBy { it.voltage }.size != 1) {

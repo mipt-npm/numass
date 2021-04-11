@@ -1,22 +1,19 @@
 pluginManagement {
     repositories {
         maven("https://repo.kotlin.link")
-        gradlePluginPortal()
         mavenCentral()
         jcenter()
-        maven("https://dl.bintray.com/kotlin/kotlin-eap")
-        maven("https://dl.bintray.com/kotlin/kotlin-dev")
+        gradlePluginPortal()
     }
 
-    val toolsVersion = "0.9.2"
-    val kotlinVersion = "1.4.31"
+    val toolsVersion = "0.9.3"
+    val kotlinVersion = "1.4.32"
 
     plugins {
         id("ru.mipt.npm.gradle.project") version toolsVersion
         id("ru.mipt.npm.gradle.mpp") version toolsVersion
         id("ru.mipt.npm.gradle.jvm") version toolsVersion
         id("ru.mipt.npm.gradle.js") version toolsVersion
-        id("ru.mipt.npm.gradle.publish") version toolsVersion
         kotlin("jvm") version kotlinVersion
         kotlin("js") version kotlinVersion
     }
@@ -35,3 +32,4 @@ pluginManagement {
 include("numass-data-model")
 include("numass-data-proto")
 include("numass-workspace")
+include("numass-model")
