@@ -12,8 +12,8 @@ allprojects {
     version = "0.1.0-SNAPSHOT"
 }
 
-val dataforgeVersion by extra("0.4.0-dev-2")
-val kmathVersion by extra("0.3.0-dev-3")
+val dataforgeVersion by extra("0.4.0")
+val kmathVersion by extra("0.3.0-dev-8")
 
 apiValidation{
     validationDisabled = true

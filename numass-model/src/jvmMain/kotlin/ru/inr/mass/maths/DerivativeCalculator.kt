@@ -13,9 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package hep.dataforge.stat.parametric
+package ru.inr.mass.maths
 
 import hep.dataforge.stat.fit.Param
+import hep.dataforge.stat.parametric.ParametricUtils
+import hep.dataforge.stat.parametric.ParametricValue
 
 /**
  *

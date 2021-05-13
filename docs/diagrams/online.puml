@@ -1,0 +1,27 @@
+@startuml
+participant Control
+participant Detector
+participant HV
+
+Control -> Detector: check connection
+
+Control -> HV: set voltage
+activate HV
+HV -> Control: voltage set
+deactivate HV
+
+Control -> Detector: start measurement
+activate Detector
+
+Control -->o Detector: cancel measurement
+
+Detector --> Control: asynchronous info
+
+Detector -> Control: measurement result (binary)
+deactivate Detector
+
+HV -> Control: dump HV log
+
+Control -> Control: combine and store data
+
+@enduml

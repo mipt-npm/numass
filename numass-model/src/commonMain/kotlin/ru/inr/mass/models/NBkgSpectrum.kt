@@ -15,61 +15,32 @@
  */
 package ru.inr.mass.models
 
-import hep.dataforge.names.NamesUtils.combineNamesWithEquals
-import hep.dataforge.stat.parametric.AbstractParametricFunction
-import hep.dataforge.stat.parametric.ParametricFunction
-import hep.dataforge.utils.MultiCounter
-import hep.dataforge.values.ValueProvider
-import hep.dataforge.values.Values
-import space.kscience.kmath.expressions.Symbol
-
-typealias Values = Map<Symbol, Double>
+import space.kscience.kmath.misc.Symbol
+import space.kscience.kmath.misc.symbol
 
 /**
  *
- * @author Darksnake
  */
-open class NBkgSpectrum(private val source: ParametricFunction) : AbstractParametricFunction(*combineNamesWithEquals(source.namesAsArray(), *list)) {
+public class NBkgSpectrum(public val source: Spectrum) : DifferentiableSpectrum {
+    override fun invoke(x: Double, arguments: Map<Symbol, Double>): Double {
+        val normValue = arguments[norm] ?: 1.0
+        val bkgValue = arguments[bkg] ?: 0.0
+        return normValue * source(x, arguments) + bkgValue
+    }
 
-    override fun derivValue(parName: String, x: Double, set: Values): Double {
-        return when (parName) {
-            "N" -> source.value(x, set)
-            "bkg" -> 1.0
-            else -> getN(set) * source.derivValue(parName, x, set)
+    override fun derivativeOrNull(symbols: List<Symbol>): Spectrum? = when {
+        symbols.isEmpty() -> this
+        symbols.size == 1 -> when (symbols.first()) {
+            norm -> Spectrum { x, arguments -> source(x, arguments) + (arguments[bkg] ?: 0.0) }
+            bkg -> Spectrum { x, arguments -> (arguments[norm] ?: 1.0) * source(x, arguments) }
+            else -> (source as? DifferentiableSpectrum)?.derivativeOrNull(symbols)?.let { NBkgSpectrum(it) }
         }
+        else -> null
     }
 
-    private fun getBkg(set: ValueProvider): Double {
-        return set.getDouble("bkg")
-    }
-
-    private fun getN(set: ValueProvider): Double {
-        return set.getDouble("N")
-    }
-
-    override fun providesDeriv(name: String): Boolean {
-        return when (name) {
-            "N","bkg" -> true
-            else -> this.source.providesDeriv(name)
-        }
-    }
-
-    override fun value(x: Double, set: Values): Double {
-        this.counter.increase("value")
-        return getN(set) * source.value(x, set) + getBkg(set)
-    }
-
-    override fun getDefaultParameter(name: String): Double {
-        return when (name) {
-            "bkg" -> 0.0
-            "N" -> 1.0
-            else -> super.getDefaultParameter(name)
-        }
-    }
-
-    companion object {
-
-        private val list = arrayOf("N", "bkg")
+    public companion object {
+        public val norm: Symbol by symbol
+        public val bkg: Symbol by symbol
     }
 
 }

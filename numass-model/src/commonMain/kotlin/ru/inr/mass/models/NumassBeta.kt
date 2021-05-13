@@ -5,25 +5,20 @@
  */
 package inr.numass.models.sterile
 
-import hep.dataforge.exceptions.NotDefinedException
-import hep.dataforge.stat.parametric.AbstractParametricBiFunction
-import hep.dataforge.stat.parametric.AbstractParametricFunction
-import hep.dataforge.stat.parametric.ParametricFunction
-import hep.dataforge.values.Values
-
-import java.lang.Math.*
+import ru.inr.mass.models.DifferentiableKernel
+import ru.inr.mass.models.Kernel
+import space.kscience.kmath.misc.StringSymbol
+import space.kscience.kmath.misc.Symbol
+import space.kscience.kmath.misc.symbol
+import kotlin.math.*
 
 /**
  * A bi-function for beta-spectrum calculation taking energy and final state as
  * input.
  *
- *
  * dissertation p.33
- *
- *
- * @author [Alexander Nozik](mailto:altavir@gmail.com)
  */
-class NumassBeta : AbstractParametricBiFunction(list) {
+public class NumassBeta : DifferentiableKernel {
 
     /**
      * Beta spectrum derivative
@@ -35,7 +30,6 @@ class NumassBeta : AbstractParametricBiFunction(list) {
      * @return
      * @throws NotDefinedException
      */
-    @Throws(NotDefinedException::class)
     private fun derivRoot(n: Int, E0: Double, mnu2: Double, E: Double): Double {
         val D = E0 - E//E0-E
         if (D == 0.0) {
@@ -58,7 +52,7 @@ class NumassBeta : AbstractParametricBiFunction(list) {
             if (E >= E0 + mu) {
                 0.0
             } else {
-                val root = sqrt(Math.max(D * D - mnu2, 0.0))
+                val root = sqrt(max(D * D - mnu2, 0.0))
                 val exp = exp(-1 - D / mu)
                 when (n) {
                     0 -> factor(E) * (D * (D + mu * exp) / root + root * (1 - exp))
@@ -79,29 +73,28 @@ class NumassBeta : AbstractParametricBiFunction(list) {
      * @return
      * @throws NotDefinedException
      */
-    @Throws(NotDefinedException::class)
-    private fun derivRootsterile(name: String, E: Double, E0: Double, pars: Values): Double {
-        val mnu2 = getParameter("mnu2", pars)
-        val mst2 = getParameter("msterile2", pars)
-        val u2 = getParameter("U2", pars)
+    private fun derivRootsterile(symbol: Symbol, E: Double, E0: Double, pars: Map<Symbol, Double>): Double {
+        val mnu2Value = pars.getValue(mnu2)
+        val msterile2Value = pars.getValue(msterile2)
+        val u2Value = pars.getValue(u2)
 
-        return when (name) {
-            "E0" -> {
-                if (u2 == 0.0) {
-                    derivRoot(0, E0, mnu2, E)
+        return when (symbol) {
+            e0 -> {
+                if (u2Value == 0.0) {
+                    derivRoot(0, E0, mnu2Value, E)
                 } else {
-                    u2 * derivRoot(0, E0, mst2, E) + (1 - u2) * derivRoot(0, E0, mnu2, E)
+                    u2Value * derivRoot(0, E0, msterile2Value, E) + (1 - u2Value) * derivRoot(0, E0, mnu2Value, E)
                 }
             }
-            "mnu2" -> (1 - u2) * derivRoot(1, E0, mnu2, E)
-            "msterile2" -> {
-                if (u2 == 0.0) {
+            mnu2 -> (1 - u2Value) * derivRoot(1, E0, mnu2Value, E)
+            msterile2 -> {
+                if (u2Value == 0.0) {
                     0.0
                 } else {
-                    u2 * derivRoot(1, E0, mst2, E)
+                    u2Value * derivRoot(1, E0, msterile2Value, E)
                 }
             }
-            "U2" -> root(E0, mst2, E) - root(E0, mnu2, E)
+            u2 -> root(E0, msterile2Value, E) - root(E0, mnu2Value, E)
             else -> 0.0
         }
 
@@ -119,16 +112,12 @@ class NumassBeta : AbstractParametricBiFunction(list) {
         val eTot = E + me
         val pe = sqrt(E * (E + 2.0 * me))
         val ve = pe / eTot
-        val yfactor = 2.0 * 2.0 * 1.0 / 137.039 * Math.PI
+        val yfactor = 2.0 * 2.0 * 1.0 / 137.039 * PI
         val y = yfactor / ve
         val fn = y / abs(1.0 - exp(-y))
         val fermi = fn * (1.002037 - 0.001427 * ve)
-        val res = fermi * pe * eTot
+        val res: Double = fermi * pe * eTot
         return K * res
-    }
-
-    override fun providesDeriv(name: String): Boolean {
-        return true
     }
 
     /**
@@ -142,14 +131,14 @@ class NumassBeta : AbstractParametricBiFunction(list) {
     private fun root(E0: Double, mnu2: Double, E: Double): Double {
         //bare beta-spectrum
         val delta = E0 - E
-        val bare = factor(E) * delta * sqrt(Math.max(delta * delta - mnu2, 0.0))
+        val bare = factor(E) * delta * sqrt(max(delta * delta - mnu2, 0.0))
         return when {
-            mnu2 >= 0 -> Math.max(bare, 0.0)
+            mnu2 >= 0 -> max(bare, 0.0)
             delta == 0.0 -> 0.0
             delta + 0.812 * sqrt(-mnu2) <= 0 -> 0.0              //sqrt(0.66)
             else -> {
                 val aux = sqrt(-mnu2 * 0.66) / delta
-                Math.max(bare * (1 + aux * exp(-1 - 1 / aux)), 0.0)
+                max(bare * (1 + aux * exp(-1 - 1 / aux)), 0.0)
             }
         }
     }
@@ -162,10 +151,10 @@ class NumassBeta : AbstractParametricBiFunction(list) {
      * @param pars
      * @return
      */
-    private fun rootsterile(E: Double, E0: Double, pars: Values): Double {
-        val mnu2 = getParameter("mnu2", pars)
-        val mst2 = getParameter("msterile2", pars)
-        val u2 = getParameter("U2", pars)
+    private fun rootsterile(E: Double, E0: Double, pars: Map<Symbol, Double>): Double {
+        val mnu2 = pars.getValue(mnu2)
+        val mst2 = pars.getValue(msterile2)
+        val u2 = pars.getValue(u2)
 
         return if (u2 == 0.0) {
             root(E0, mnu2, E)
@@ -175,51 +164,65 @@ class NumassBeta : AbstractParametricBiFunction(list) {
 // P(rootsterile)+ (1-P)root
     }
 
-    override fun getDefaultParameter(name: String): Double {
-        return when (name) {
-            "mnu2", "U2", "msterile2" -> 0.0
-            else -> super.getDefaultParameter(name)
+    override val x: Symbol = StringSymbol("fs")
+    override val y: Symbol = StringSymbol("eIn")
+
+    override fun invoke(x: Double, y: Double, arguments: Map<Symbol, Double>): Double {
+        val e0 = arguments.getValue(e0)
+        return rootsterile(y, e0 - x, arguments)
+    }
+
+    override fun derivativeOrNull(symbols: List<Symbol>): Kernel? = when (symbols.size) {
+        0 -> this
+        1 -> Kernel { fs, eIn, arguments ->
+            val e0 = arguments.getValue(e0)
+            derivRootsterile(symbols.first(), eIn, e0 - fs, arguments)
         }
+        else -> null
     }
+//
+//    override fun getDefaultParameter(name: String): Double {
+//        return when (name) {
+//            "mnu2", "U2", "msterile2" -> 0.0
+//            else -> super.getDefaultParameter(name)
+//        }
+//    }
+//
+//    override fun derivValue(parName: String, fs: Double, eIn: Double, pars: Values): Double {
+//        val e0 = getParameter("E0", pars)
+//        return derivRootsterile(parName, eIn, e0 - fs, pars)
+//    }
+//
+//    /**
+//     * Get univariate spectrum with given final state
+//     */
+//    fun getSpectrum(fs: Double = 0.0): ParametricFunction {
+//        return BetaSpectrum(fs);
+//    }
+//
+//    inner class BetaSpectrum(val fs: Double) : AbstractParametricFunction(*list) {
+//
+//        override fun providesDeriv(name: String): Boolean {
+//            return this@NumassBeta.providesDeriv(name)
+//        }
+//
+//        override fun derivValue(parName: String, x: Double, set: Values): Double {
+//            return this@NumassBeta.derivValue(parName, fs, x, set)
+//        }
+//
+//        override fun value(x: Double, set: Values): Double {
+//            return this@NumassBeta.value(fs, x, set)
+//        }
+//
+//    }
 
-    override fun derivValue(parName: String, fs: Double, eIn: Double, pars: Values): Double {
-        val e0 = getParameter("E0", pars)
-        return derivRootsterile(parName, eIn, e0 - fs, pars)
-    }
 
-    override fun value(fs: Double, eIn: Double, pars: Values): Double {
-        val e0 = getParameter("E0", pars)
-        return rootsterile(eIn, e0 - fs, pars)
-    }
-
-    /**
-     * Get univariate spectrum with given final state
-     */
-    fun getSpectrum(fs: Double = 0.0): ParametricFunction {
-        return BetaSpectrum(fs);
-    }
-
-    inner class BetaSpectrum(val fs: Double) : AbstractParametricFunction(*list) {
-
-        override fun providesDeriv(name: String): Boolean {
-            return this@NumassBeta.providesDeriv(name)
-        }
-
-        override fun derivValue(parName: String, x: Double, set: Values): Double {
-            return this@NumassBeta.derivValue(parName, fs, x, set)
-        }
-
-        override fun value(x: Double, set: Values): Double {
-            return this@NumassBeta.value(fs, x, set)
-        }
-
-    }
-
-
-    companion object {
-
-        private const val K = 1E-23
-        private val list = arrayOf("E0", "mnu2", "msterile2", "U2")
+    public companion object {
+        private const val K: Double = 1E-23
+        public val e0: Symbol by symbol
+        public val mnu2: Symbol by symbol
+        public val msterile2: Symbol by symbol
+        public val u2: Symbol by symbol
     }
 
 }

@@ -13,6 +13,7 @@ kotlin.sourceSets {
         dependencies {
             api("space.kscience:dataforge-meta:$dataforgeVersion")
             api("space.kscience:kmath-for-real:$kmathVersion")
+            api("space.kscience:kmath-functions:$kmathVersion")
         }
     }
     jvmMain{
