@@ -5,60 +5,44 @@
  */
 package inr.numass.models.sterile
 
-import hep.dataforge.context.Context
-import hep.dataforge.description.NodeDef
-import hep.dataforge.description.NodeDefs
-import hep.dataforge.description.ValueDef
-import hep.dataforge.description.ValueDefs
-import hep.dataforge.exceptions.NotDefinedException
-import hep.dataforge.maths.integration.UnivariateIntegrator
-import hep.dataforge.meta.Meta
-import hep.dataforge.stat.parametric.AbstractParametricBiFunction
-import hep.dataforge.stat.parametric.AbstractParametricFunction
-import hep.dataforge.stat.parametric.ParametricBiFunction
-import hep.dataforge.values.ValueType.BOOLEAN
-import hep.dataforge.values.Values
-import inr.numass.getFSS
-import inr.numass.models.FSS
-import inr.numass.models.misc.LossCalculator
-import inr.numass.utils.NumassIntegrator
 
-/**
- * Compact all-in-one model for sterile neutrino spectrum
- *
- * @author Alexander Nozik
- */
-@NodeDefs(
-        NodeDef(key = "resolution"),
-        NodeDef(key = "transmission")
-)
-@ValueDefs(
-        ValueDef(key = "fssFile", info = "The name for external FSS file. By default internal FSS file is used"),
-        ValueDef(key = "useFSS", type = arrayOf(BOOLEAN))
-)
+import ru.inr.mass.models.DifferentiableKernel
+import ru.inr.mass.models.DifferentiableSpectrum
+import ru.inr.mass.models.FSS
+import ru.inr.mass.models.Spectrum
+import space.kscience.dataforge.context.Context
+import space.kscience.kmath.misc.Symbol
 
 /**
  * @param source variables:Eo offset,Ein; parameters: "mnu2", "msterile2", "U2"
  * @param transmission variables:Ein,Eout; parameters: "A"
  * @param resolution variables:Eout,U; parameters: "X", "trap"
  */
-
-class SterileNeutrinoSpectrum @JvmOverloads constructor(
-        context: Context,
-        configuration: Meta,
-        val source: ParametricBiFunction = NumassBeta(),
-        val transmission: ParametricBiFunction = NumassTransmission(context, configuration.getMetaOrEmpty("transmission")),
-        val resolution: ParametricBiFunction = NumassResolution(context, configuration.getMeta("resolution", Meta.empty()))
-) : AbstractParametricFunction(*list) {
+class SterileNeutrinoSpectrum(
+    context: Context,
+    public val source: DifferentiableKernel = NumassBeta,
+    public val transmission: DifferentiableKernel,
+    public val resolution: DifferentiableKernel,
+    public val fss: FSS?
+) : DifferentiableSpectrum {
 
 
     /**
      * auxiliary function for trans-res convolution
      */
-    private val transRes: ParametricBiFunction = TransRes()
-    private val fss: FSS? = getFSS(context, configuration)
+    private val transRes: DifferentiableKernel = TransRes()
+
     //    private boolean useMC;
-    private val fast: Boolean = configuration.getBoolean("fast", true)
+    //private val fast: Boolean = configuration.getBoolean("fast", true)
+
+
+    override fun invoke(x: Double, arguments: Map<Symbol, Double>): Double {
+        TODO("Not yet implemented")
+    }
+
+    override fun derivativeOrNull(symbols: List<Symbol>): Spectrum? {
+        TODO("Not yet implemented")
+    }
 
     override fun derivValue(parName: String, u: Double, set: Values): Double {
         return when (parName) {
@@ -87,10 +71,11 @@ class SterileNeutrinoSpectrum @JvmOverloads constructor(
      * @return
      */
     private fun integrate(
-            u: Double,
-            sourceFunction: ParametricBiFunction,
-            transResFunction: ParametricBiFunction,
-            set: Values): Double {
+        u: Double,
+        sourceFunction: DifferentiableKernel,
+        transResFunction: DifferentiableKernel,
+        set: Map<Symbol, Double>,
+    ): Double {
 
         val eMax = set.getDouble("E0") + 5.0
 
@@ -109,7 +94,11 @@ class SterileNeutrinoSpectrum @JvmOverloads constructor(
             NumassIntegrator.getHighDensityIntegrator()
         }
 
-        return integrator.integrate(u, eMax) { eIn -> sumByFSS(eIn, sourceFunction, set) * transResFunction.value(eIn, u, set) }
+        return integrator.integrate(u, eMax) { eIn ->
+            sumByFSS(eIn, sourceFunction, set) * transResFunction.value(eIn,
+                u,
+                set)
+        }
     }
 
     private fun sumByFSS(eIn: Double, sourceFunction: ParametricBiFunction, set: Values): Double {
@@ -121,8 +110,7 @@ class SterileNeutrinoSpectrum @JvmOverloads constructor(
     }
 
 
-
-    private inner class TransRes : AbstractParametricBiFunction(arrayOf("X", "trap")) {
+    private inner class TransRes : DifferentiableKernel {
 
         override fun providesDeriv(name: String): Boolean {
             return true

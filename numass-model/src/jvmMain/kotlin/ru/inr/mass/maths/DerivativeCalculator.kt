@@ -16,7 +16,6 @@
 package ru.inr.mass.maths
 
 import hep.dataforge.stat.fit.Param
-import hep.dataforge.stat.parametric.ParametricUtils
 import hep.dataforge.stat.parametric.ParametricValue
 
 /**

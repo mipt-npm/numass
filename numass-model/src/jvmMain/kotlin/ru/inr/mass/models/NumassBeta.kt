@@ -18,7 +18,7 @@ import kotlin.math.*
  *
  * dissertation p.33
  */
-public class NumassBeta : DifferentiableKernel {
+public object NumassBeta : DifferentiableKernel {
 
     /**
      * Beta spectrum derivative
@@ -217,12 +217,10 @@ public class NumassBeta : DifferentiableKernel {
 //    }
 
 
-    public companion object {
         private const val K: Double = 1E-23
         public val e0: Symbol by symbol
         public val mnu2: Symbol by symbol
         public val msterile2: Symbol by symbol
         public val u2: Symbol by symbol
-    }
 
 }

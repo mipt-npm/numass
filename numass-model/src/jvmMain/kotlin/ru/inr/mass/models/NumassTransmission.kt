@@ -7,21 +7,29 @@ package inr.numass.models.sterile
 
 import ru.inr.mass.models.DifferentiableKernel
 import ru.inr.mass.models.Kernel
-import ru.inr.mass.models.UnivariateFunction
+import ru.inr.mass.models.cache
+import space.kscience.kmath.functions.PiecewisePolynomial
+import space.kscience.kmath.functions.UnivariateFunction
+import space.kscience.kmath.functions.value
 import space.kscience.kmath.integration.GaussIntegrator
 import space.kscience.kmath.integration.integrate
 import space.kscience.kmath.misc.Symbol
 import space.kscience.kmath.misc.symbol
 import space.kscience.kmath.operations.DoubleField
-import kotlin.jvm.Synchronized
 import kotlin.math.*
 
+
+public fun PiecewisePolynomial<Double>.asFunction(defaultValue: Double = 0.0): UnivariateFunction<Double> = {
+    value(DoubleField, it) ?: defaultValue
+}
 
 /**
  * @author [Alexander Nozik](mailto:altavir@gmail.com)
  */
-public class NumassTransmission(public val trapFunc: Kernel, private val adjustX: Boolean = false) :
-    DifferentiableKernel {
+public class NumassTransmission(
+    public val trapFunc: Kernel,
+    private val adjustX: Boolean = false,
+) : DifferentiableKernel {
     //    private val trapFunc: Kernel =         if (meta.hasValue("trapping")) {
 //        val trapFuncStr = meta.getString("trapping")
 //        trapFunc = if (trapFuncStr.startsWith("function::")) {
@@ -83,7 +91,7 @@ public class NumassTransmission(public val trapFunc: Kernel, private val adjustX
         public val trap: Symbol by symbol
         public val thickness: Symbol by symbol
 
-        private val cache = HashMap<Int, UnivariateFunction>()
+        private val cache = HashMap<Int, UnivariateFunction<Double>>()
 
         private const val ION_POTENTIAL = 15.4//eV
 
@@ -128,13 +136,13 @@ public class NumassTransmission(public val trapFunc: Kernel, private val adjustX
             return exp(-x)
         }
 
-        private fun getCachedSpectrum(order: Int): UnivariateFunction {
+        private fun getCachedSpectrum(order: Int): UnivariateFunction<Double> {
             return when {
                 order <= 0 -> error("Non-positive loss cache order")
                 order == 1 -> singleScatterFunction
                 else -> cache.getOrPut(order) {
                     //LoggerFactory.getLogger(javaClass).debug("Scatter cache of order {} not found. Updating", order)
-                    getNextLoss(getMargin(order), getCachedSpectrum(order - 1))
+                    getNextLoss(getMargin(order), getCachedSpectrum(order - 1)).asFunction()
                 }
             }
         }
@@ -145,7 +153,7 @@ public class NumassTransmission(public val trapFunc: Kernel, private val adjustX
          * @param order
          * @return
          */
-        private fun getLoss(order: Int): UnivariateFunction {
+        private fun getLoss(order: Int): UnivariateFunction<Double> {
             return getCachedSpectrum(order)
         }
 
@@ -259,14 +267,14 @@ public class NumassTransmission(public val trapFunc: Kernel, private val adjustX
          * @return
          */
         @Synchronized
-        private fun getNextLoss(margin: Double, loss: UnivariateFunction): UnivariateFunction {
+        private fun getNextLoss(margin: Double, loss: UnivariateFunction<Double>): PiecewisePolynomial<Double> {
             val res = { x: Double ->
                 integrator.integrate(5.0..margin) { y ->
                     loss(x - y) * singleScatterFunction(y)
                 }
             }
 
-            return FunctionCaching.cacheUnivariateFunction(0.0, margin, 200, res)
+            return res.cache(0.0..margin, 200)
 
         }
 
@@ -314,7 +322,7 @@ public class NumassTransmission(public val trapFunc: Kernel, private val adjustX
          */
         private const val SCATTERING_PROBABILITY_THRESHOLD = 1e-3
         private val integrator = GaussIntegrator(DoubleField)
-        private val lossProbCache = Misc.getLRUCache<Double, List<Double>>(100)
+        private val lossProbCache = HashMap<Double, List<Double>>(100)
 
 
         private val A1 = 0.204
@@ -325,7 +333,7 @@ public class NumassTransmission(public val trapFunc: Kernel, private val adjustX
         private val w1 = 1.85
         private val w2 = 12.5
 
-        public val singleScatterFunction: UnivariateFunction = { eps: Double ->
+        public val singleScatterFunction: UnivariateFunction<Double> = { eps: Double ->
             when {
                 eps <= 0 -> 0.0
                 eps <= b -> {
@@ -357,8 +365,8 @@ public class NumassTransmission(public val trapFunc: Kernel, private val adjustX
             exW: Double,
             ionW: Double,
             exIonRatio: Double,
-        ): UnivariateFunction {
-            val func: UnivariateFunction = { eps: Double ->
+        ): UnivariateFunction<Double> {
+            val func: UnivariateFunction<Double> = { eps: Double ->
                 if (eps <= 0) {
                     0.0
                 } else {
@@ -390,7 +398,7 @@ public class NumassTransmission(public val trapFunc: Kernel, private val adjustX
         public val ionW: Symbol by symbol
         public val exIonRatio: Symbol by symbol
 
-        public fun getSingleScatterFunction(set: Map<Symbol, Double>): UnivariateFunction {
+        public fun getSingleScatterFunction(set: Map<Symbol, Double>): UnivariateFunction<Double> {
             val exPos = set.getValue(exPos)
             val ionPos = set.getValue(ionPos)
             val exW = set.getValue(exW)

@@ -33,6 +33,3 @@ public interface DifferentiableKernel : DifferentiableExpression<Double, Kernel>
 public fun <T> Expression<T>.withDefault(default: Map<Symbol, T>): Expression<T> = Expression { args ->
     invoke(default + args)
 }
-
-public typealias UnivariateFunction = (Double) -> Double
-public typealias BivariateFunction = (Double, Double) -> Double

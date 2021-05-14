@@ -5,7 +5,6 @@
  */
 package inr.numass.models.sterile
 
-import ru.inr.mass.models.BivariateFunction
 import ru.inr.mass.models.DifferentiableKernel
 import ru.inr.mass.models.Kernel
 import space.kscience.kmath.misc.Symbol
@@ -18,7 +17,7 @@ import kotlin.math.sqrt
 public class NumassResolution(
     public val resA: Double = 8.3e-5,
     public val resB: Double = 0.0,
-    public val tailFunction: BivariateFunction =  { _, _ -> 1.0 },
+    public val tailFunction: (Double, Double) -> Double = { _, _ -> 1.0 },
 ) : DifferentiableKernel {
 
 //    private val tailFunction: Kernel = when {
