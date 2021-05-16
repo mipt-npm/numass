@@ -15,6 +15,7 @@ import inr.numass.models.sterile.NumassTransmission.Companion.trap
 import ru.inr.mass.models.*
 import space.kscience.kmath.expressions.derivative
 import space.kscience.kmath.integration.integrate
+import space.kscience.kmath.integration.integrator
 import space.kscience.kmath.integration.value
 import space.kscience.kmath.misc.Symbol
 import space.kscience.kmath.operations.DoubleField
@@ -91,7 +92,7 @@ public class SterileNeutrinoSpectrum(
 //            getHighDensityIntegrator()
 //        }
 
-        return DoubleField.integrate(u..eMax) { eIn ->
+        return DoubleField.integrator.integrate(u..eMax) { eIn ->
             sumByFSS(eIn, sourceFunction, arguments) * transResFunction(eIn, u, arguments)
         }.value ?: error("Integration failed")
     }
@@ -125,10 +126,9 @@ public class SterileNeutrinoSpectrum(
             val integrand = { eOut: Double -> transFunc(eIn, eOut, arguments) * resolution(eOut, u, arguments) }
 
             val border = u + 30
-            val firstPart = DoubleField.integrate(u..min(eIn, border), function = integrand).value
-                ?: error("Integration failed")
+            val firstPart = DoubleField.integrator.integrate(u..min(eIn, border), function = integrand).value
             val secondPart: Double = if (eIn > border) {
-                DoubleField.integrate(border..eIn, function = integrand).value ?: error("Integration failed")
+                DoubleField.integrator.integrate(border..eIn, function = integrand).value
             } else {
                 0.0
             }

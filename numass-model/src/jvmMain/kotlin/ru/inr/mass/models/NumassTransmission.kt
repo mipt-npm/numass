@@ -13,6 +13,7 @@ import space.kscience.kmath.functions.UnivariateFunction
 import space.kscience.kmath.functions.value
 import space.kscience.kmath.integration.GaussIntegrator
 import space.kscience.kmath.integration.integrate
+import space.kscience.kmath.integration.value
 import space.kscience.kmath.misc.Symbol
 import space.kscience.kmath.misc.symbol
 import space.kscience.kmath.operations.DoubleField
@@ -273,7 +274,7 @@ public class NumassTransmission(
             val res = { x: Double ->
                 integrator.integrate(5.0..margin) { y ->
                     loss(x - y) * singleScatterFunction(y)
-                }
+                }.value
             }
 
             return res.cache(0.0..margin, 200)
@@ -389,7 +390,7 @@ public class NumassTransmission(
             val cutoff = 25.0
             //caclulating lorentz integral analythically
             val tailNorm = (atan((ionPos - cutoff) * 2.0 / ionW) + 0.5 * PI) * ionW / 2.0
-            val norm: Double = integrator.integrate(range = 0.0..cutoff, function = func) + tailNorm
+            val norm: Double = integrator.integrate(range = 0.0..cutoff, function = func).value + tailNorm
             return { e -> func(e) / norm }
         }
 
