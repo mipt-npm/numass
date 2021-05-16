@@ -22,6 +22,7 @@ import space.kscience.dataforge.meta.double
 import space.kscience.dataforge.meta.get
 import space.kscience.dataforge.meta.int
 import kotlin.time.Duration
+import kotlin.time.DurationUnit
 import kotlin.time.nanoseconds
 
 /**
@@ -57,7 +58,7 @@ public interface NumassPoint : ParentBlock {
      * Get the length key of meta or calculate length as a sum of block lengths. The latter could be a bit slow
      */
     override suspend fun getLength(): Duration =
-        flowBlocks().filter { it.channel == 0 }.toList().sumOf { it.getLength().inNanoseconds }.nanoseconds
+        flowBlocks().filter { it.channel == 0 }.toList().sumOf { it.getLength().toDouble(DurationUnit.NANOSECONDS) }.nanoseconds
 
     /**
      * Get all events it all blocks as a single sequence

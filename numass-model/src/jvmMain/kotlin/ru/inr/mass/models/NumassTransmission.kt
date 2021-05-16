@@ -27,8 +27,8 @@ public fun PiecewisePolynomial<Double>.asFunction(defaultValue: Double = 0.0): U
  * @author [Alexander Nozik](mailto:altavir@gmail.com)
  */
 public class NumassTransmission(
-    public val trapFunc: Kernel,
-    private val adjustX: Boolean = false,
+    public val trapFunc: Kernel = defaultTrapping,
+//    private val adjustX: Boolean = false,
 ) : DifferentiableKernel {
     //    private val trapFunc: Kernel =         if (meta.hasValue("trapping")) {
 //        val trapFuncStr = meta.getString("trapping")
@@ -83,7 +83,7 @@ public class NumassTransmission(
         //        }
 
         //trapping part
-        val trap = arguments.getOrElse(trap) { 1.0 } * trapFunc(x, y, arguments)
+        val trap = arguments[trap] ?: 1.0 * trapFunc(x, y, arguments)
         return loss + trap
     }
 
@@ -97,15 +97,16 @@ public class NumassTransmission(
 
 
         private fun getX(arguments: Map<Symbol, Double>, eIn: Double, adjustX: Boolean = false): Double {
+            val thickness = arguments[thickness] ?: 0.0
             return if (adjustX) {
                 //From our article
-                arguments.getValue(thickness) * ln(eIn / ION_POTENTIAL) * eIn * ION_POTENTIAL / 1.9580741410115568e6
+                thickness * ln(eIn / ION_POTENTIAL) * eIn * ION_POTENTIAL / 1.9580741410115568e6
             } else {
-                arguments.getValue(thickness)
+                thickness
             }
         }
 
-        private fun p0(eIn: Double, set: Map<Symbol, Double>): Double = getLossProbability(0, getX(set, eIn))
+        internal fun p0(eIn: Double, set: Map<Symbol, Double>): Double = getLossProbability(0, getX(set, eIn))
 
         private fun getGunLossProbabilities(X: Double): List<Double> {
             val res = ArrayList<Double>()
@@ -132,7 +133,7 @@ public class NumassTransmission(
             return res
         }
 
-        fun getGunZeroLossProb(x: Double): Double {
+        private fun getGunZeroLossProb(x: Double): Double {
             return exp(-x)
         }
 
@@ -207,9 +208,10 @@ public class NumassTransmission(
             return res
         }
 
-        fun getLossProbabilities(x: Double): List<Double> = lossProbCache.getOrPut(x) { calculateLossProbabilities(x) }
+        private fun getLossProbabilities(x: Double): List<Double> =
+            lossProbCache.getOrPut(x) { calculateLossProbabilities(x) }
 
-        fun getLossProbability(order: Int, X: Double): Double {
+        private fun getLossProbability(order: Int, X: Double): Double {
             if (order == 0) {
                 return if (X > 0) {
                     1 / X * (1 - exp(-X))
@@ -225,7 +227,7 @@ public class NumassTransmission(
             }
         }
 
-        fun getLossValue(order: Int, Ei: Double, Ef: Double): Double {
+        private fun getLossValue(order: Int, Ei: Double, Ef: Double): Double {
             return when {
                 Ei - Ef < 5.0 -> 0.0
                 Ei - Ef >= getMargin(order) -> 0.0
@@ -241,7 +243,7 @@ public class NumassTransmission(
          * @param Ef
          * @return
          */
-        fun getLossValue(probs: List<Double>, Ei: Double, Ef: Double): Double {
+        private fun getLossValue(probs: List<Double>, Ei: Double, Ef: Double): Double {
             var sum = 0.0
             for (i in 1 until probs.size) {
                 sum += probs[i] * getLossValue(i, Ei, Ef)
@@ -305,7 +307,7 @@ public class NumassTransmission(
          * @param Ef
          * @return
          */
-        fun getTotalLossValue(x: Double, Ei: Double, Ef: Double): Double {
+        private fun getTotalLossValue(x: Double, Ei: Double, Ef: Double): Double {
             return if (x == 0.0) {
                 0.0
             } else {
@@ -464,6 +466,11 @@ public class NumassTransmission(
 //            }
 //
 //        }
+
+        internal val defaultTrapping: Kernel = Kernel { e, u, arguments ->
+            val d = e - u
+            0.99797 - 3.05346E-7 * d - 5.45738E-10 * d.pow(2.0) - 6.36105E-14 * d.pow(3.0)
+        }
     }
 
 }

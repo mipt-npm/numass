@@ -32,8 +32,6 @@ import java.io.ByteArrayOutputStream
 import java.io.InputStream
 import java.util.zip.Inflater
 import kotlin.time.Duration
-import kotlin.time.milliseconds
-import kotlin.time.nanoseconds
 
 /**
  * Protobuf based numass point
@@ -67,7 +65,7 @@ internal class ProtoNumassPoint(
         } ?: Instant.DISTANT_PAST
 
     override suspend fun getLength(): Duration = meta["acquisition_time"].double?.let {
-        (it * 1000).toLong().milliseconds
+        Duration.milliseconds(it * 1000)
     } ?: super.getLength()
 
     override fun toString(): String = "ProtoNumassPoint(index = ${index}, hv = $voltage)"
@@ -130,15 +128,15 @@ public class ProtoNumassBlock(
         }
 
     override suspend fun getLength(): Duration = when {
-        block.length > 0 -> block.length.nanoseconds
+        block.length > 0 -> Duration.nanoseconds(block.length)
         parent?.meta["acquisition_time"] != null ->
-            (parent?.meta["acquisition_time"].double ?: 0.0 * 1000).milliseconds
+            Duration.milliseconds((parent?.meta["acquisition_time"].double ?: 0.0 * 1000))
         else -> {
             LoggerFactory.getLogger(javaClass)
                 .error("No length information on block. Trying to infer from first and last events")
             val times = runBlocking { events.map { it.timeOffset }.toList() }
             val nanos = (times.maxOrNull()!! - times.minOrNull()!!)
-            nanos.nanoseconds
+            Duration.nanoseconds(nanos)
         }
     }
 
@@ -172,7 +170,7 @@ public class ProtoNumassBlock(
 
     override val frames: Flow<NumassFrame>
         get() {
-            val tickSize = block.bin_size.nanoseconds
+            val tickSize = Duration.nanoseconds(block.bin_size)
             return block.frames.asFlow().map { frame ->
                 val time = startTime.plus(frame.time, DateTimeUnit.NANOSECOND)
                 val frameData = frame.data_

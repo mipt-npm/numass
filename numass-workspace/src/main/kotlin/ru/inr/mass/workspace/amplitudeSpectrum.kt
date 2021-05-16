@@ -8,6 +8,7 @@ import space.kscience.dataforge.context.warn
 import space.kscience.kmath.histogram.UnivariateHistogram
 import space.kscience.kmath.histogram.center
 import space.kscience.kmath.histogram.put
+import space.kscience.kmath.misc.UnstableKMathAPI
 import space.kscience.kmath.structures.DoubleBuffer
 import space.kscience.kmath.structures.asBuffer
 
@@ -41,6 +42,7 @@ fun Collection<NumassPoint>.spectrum(): UnivariateHistogram {
 /**
  * Re-shape the spectrum with the increased bin size and range. Throws a error if new bin is smaller than before.
  */
+@OptIn(UnstableKMathAPI::class)
 fun UnivariateHistogram.reShape(
     binSize: Int,
     channelRange: IntRange,

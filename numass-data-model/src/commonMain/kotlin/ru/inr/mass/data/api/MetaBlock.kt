@@ -3,7 +3,7 @@ package ru.inr.mass.data.api
 import kotlinx.coroutines.flow.*
 import kotlinx.datetime.Instant
 import kotlin.time.Duration
-import kotlin.time.nanoseconds
+import kotlin.time.DurationUnit
 
 public interface ParentBlock : NumassBlock {
 
@@ -26,7 +26,8 @@ public class MetaBlock(private val blocks: List<NumassBlock>) : ParentBlock {
     override val startTime: Instant
         get() = blocks.first().startTime
 
-    override suspend fun getLength(): Duration = blocks.sumOf { it.getLength().inNanoseconds }.nanoseconds
+    override suspend fun getLength(): Duration =
+        Duration.nanoseconds(blocks.sumOf { it.getLength().toDouble(DurationUnit.NANOSECONDS) })
 
     override val events: Flow<NumassEvent>
         get() = flow {

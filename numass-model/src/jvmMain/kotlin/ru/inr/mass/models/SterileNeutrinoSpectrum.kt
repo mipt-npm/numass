@@ -6,24 +6,30 @@
 package inr.numass.models.sterile
 
 
-import ru.inr.mass.models.DifferentiableKernel
-import ru.inr.mass.models.DifferentiableSpectrum
-import ru.inr.mass.models.FSS
-import ru.inr.mass.models.Spectrum
-import space.kscience.dataforge.context.Context
+import inr.numass.models.sterile.NumassBeta.e0
+import inr.numass.models.sterile.NumassBeta.mnu2
+import inr.numass.models.sterile.NumassBeta.msterile2
+import inr.numass.models.sterile.NumassBeta.u2
+import inr.numass.models.sterile.NumassTransmission.Companion.thickness
+import inr.numass.models.sterile.NumassTransmission.Companion.trap
+import ru.inr.mass.models.*
+import space.kscience.kmath.expressions.derivative
+import space.kscience.kmath.integration.integrate
+import space.kscience.kmath.integration.value
 import space.kscience.kmath.misc.Symbol
+import space.kscience.kmath.operations.DoubleField
+import kotlin.math.min
 
 /**
  * @param source variables:Eo offset,Ein; parameters: "mnu2", "msterile2", "U2"
  * @param transmission variables:Ein,Eout; parameters: "A"
  * @param resolution variables:Eout,U; parameters: "X", "trap"
  */
-class SterileNeutrinoSpectrum(
-    context: Context,
+public class SterileNeutrinoSpectrum(
     public val source: DifferentiableKernel = NumassBeta,
-    public val transmission: DifferentiableKernel,
-    public val resolution: DifferentiableKernel,
-    public val fss: FSS?
+    public val transmission: DifferentiableKernel = NumassTransmission(),
+    public val resolution: DifferentiableKernel = NumassResolution(),
+    public val fss: FSS? = FSS.default,
 ) : DifferentiableSpectrum {
 
 
@@ -36,30 +42,22 @@ class SterileNeutrinoSpectrum(
     //private val fast: Boolean = configuration.getBoolean("fast", true)
 
 
-    override fun invoke(x: Double, arguments: Map<Symbol, Double>): Double {
-        TODO("Not yet implemented")
+    override fun invoke(u: Double, arguments: Map<Symbol, Double>): Double {
+        return convolute(u, source, transRes, arguments)
     }
 
     override fun derivativeOrNull(symbols: List<Symbol>): Spectrum? {
-        TODO("Not yet implemented")
-    }
-
-    override fun derivValue(parName: String, u: Double, set: Values): Double {
-        return when (parName) {
-            "U2", "msterile2", "mnu2", "E0" -> integrate(u, source.derivative(parName), transRes, set)
-            "X", "trap" -> integrate(u, source, transRes.derivative(parName), set)
-            else -> throw NotDefinedException()
+        if (symbols.isEmpty()) return this
+        return when (symbols.singleOrNull() ?: TODO("First derivatives only")) {
+            u2, msterile2, mnu2, e0 -> Spectrum { u, arguments ->
+                convolute(u, source.derivative(symbols), transRes, arguments)
+            }
+            thickness, trap -> Spectrum { u, arguments ->
+                convolute(u, source, transRes.derivative(symbols), arguments)
+            }
+            else -> null
         }
     }
-
-    override fun value(u: Double, set: Values): Double {
-        return integrate(u, source, transRes, set)
-    }
-
-    override fun providesDeriv(name: String): Boolean {
-        return source.providesDeriv(name) && transmission.providesDeriv(name) && resolution.providesDeriv(name)
-    }
-
 
     /**
      * Direct Gauss-Legendre integration
@@ -67,80 +65,70 @@ class SterileNeutrinoSpectrum(
      * @param u
      * @param sourceFunction
      * @param transResFunction
-     * @param set
+     * @param arguments
      * @return
      */
-    private fun integrate(
+    private fun convolute(
         u: Double,
-        sourceFunction: DifferentiableKernel,
-        transResFunction: DifferentiableKernel,
-        set: Map<Symbol, Double>,
+        sourceFunction: Kernel,
+        transResFunction: Kernel,
+        arguments: Map<Symbol, Double>,
     ): Double {
 
-        val eMax = set.getDouble("E0") + 5.0
+        val eMax = arguments.getValue(e0) + 5.0
 
         if (u >= eMax) {
             return 0.0
         }
 
-        val integrator: UnivariateIntegrator<*> = if (fast) {
-            when {
-                eMax - u < 300 -> NumassIntegrator.getFastInterator()
-                eMax - u > 2000 -> NumassIntegrator.getHighDensityIntegrator()
-                else -> NumassIntegrator.getDefaultIntegrator()
-            }
+//        val integrator: UnivariateIntegrator<*> = if (fast) {
+//            when {
+//                eMax - u < 300 -> getFastInterator()
+//                eMax - u > 2000 -> getHighDensityIntegrator()
+//                else -> getDefaultIntegrator()
+//            }
+//        } else {
+//            getHighDensityIntegrator()
+//        }
 
-        } else {
-            NumassIntegrator.getHighDensityIntegrator()
-        }
-
-        return integrator.integrate(u, eMax) { eIn ->
-            sumByFSS(eIn, sourceFunction, set) * transResFunction.value(eIn,
-                u,
-                set)
-        }
+        return DoubleField.integrate(u..eMax) { eIn ->
+            sumByFSS(eIn, sourceFunction, arguments) * transResFunction(eIn, u, arguments)
+        }.value ?: error("Integration failed")
     }
 
-    private fun sumByFSS(eIn: Double, sourceFunction: ParametricBiFunction, set: Values): Double {
+    private fun sumByFSS(eIn: Double, sourceFunction: Kernel, arguments: Map<Symbol, Double>): Double {
         return if (fss == null) {
-            sourceFunction.value(0.0, eIn, set)
+            sourceFunction(0.0, eIn, arguments)
         } else {
-            (0 until fss.size()).sumByDouble { fss.getP(it) * sourceFunction.value(fss.getE(it), eIn, set) }
+            (0 until fss.size).sumOf { fss.ps[it] * sourceFunction(fss.es[it], eIn, arguments) }
         }
     }
 
 
     private inner class TransRes : DifferentiableKernel {
 
-        override fun providesDeriv(name: String): Boolean {
-            return true
+        override fun invoke(eIn: Double, u: Double, arguments: Map<Symbol, Double>): Double {
+            val p0 = NumassTransmission.p0(eIn, arguments)
+            return p0 * resolution(eIn, u, arguments) + lossRes(transmission, eIn, u, arguments)
         }
 
-        override fun derivValue(parName: String, eIn: Double, u: Double, set: Values): Double {
-            return when (parName) {
-                "X" -> throw NotDefinedException()//TODO implement p0 derivative
-                "trap" -> lossRes(transmission.derivative(parName), eIn, u, set)
-                else -> super.derivValue(parName, eIn, u, set)
+        override fun derivativeOrNull(symbols: List<Symbol>): Kernel? {
+            if (symbols.isEmpty()) return this
+            return when (symbols.singleOrNull() ?: TODO("First derivatives only")) {
+                thickness -> null//TODO implement p0 derivative
+                trap -> Kernel { eIn, u, arguments -> lossRes(transmission.derivative(symbols), eIn, u, arguments) }
+                else -> null
             }
         }
 
-        override fun value(eIn: Double, u: Double, set: Values): Double {
-
-            val p0 = LossCalculator.p0(set, eIn)
-            return p0 * resolution.value(eIn, u, set) + lossRes(transmission, eIn, u, set)
-        }
-
-        private fun lossRes(transFunc: ParametricBiFunction, eIn: Double, u: Double, set: Values): Double {
-            val integrand = { eOut: Double -> transFunc.value(eIn, eOut, set) * resolution.value(eOut, u, set) }
+        private fun lossRes(transFunc: Kernel, eIn: Double, u: Double, arguments: Map<Symbol, Double>): Double {
+            val integrand = { eOut: Double -> transFunc(eIn, eOut, arguments) * resolution(eOut, u, arguments) }
 
             val border = u + 30
-            val firstPart = NumassIntegrator.getFastInterator().integrate(u, Math.min(eIn, border), integrand)
+            val firstPart = DoubleField.integrate(u..min(eIn, border), function = integrand).value
+                ?: error("Integration failed")
             val secondPart: Double = if (eIn > border) {
-                if (fast) {
-                    NumassIntegrator.getDefaultIntegrator().integrate(border, eIn, integrand)
-                } else {
-                    NumassIntegrator.getHighDensityIntegrator().integrate(border, eIn, integrand)
-                }
+                DoubleField.integrate(border..eIn, function = integrand).value ?: error("Integration failed")
             } else {
                 0.0
             }
@@ -149,9 +137,5 @@ class SterileNeutrinoSpectrum(
 
     }
 
-    companion object {
-
-        private val list = arrayOf("X", "trap", "E0", "mnu2", "msterile2", "U2")
-    }
-
+    public companion object
 }

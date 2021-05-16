@@ -24,7 +24,7 @@ import space.kscience.kmath.structures.DoubleBuffer
 
 
 @OptIn(UnstableKMathAPI::class)
-public class FSS(public val ps: DoubleBuffer, public val es: DoubleBuffer) : ColumnarData<Double> {
+public class FSS(public val es: DoubleBuffer, public val ps: DoubleBuffer) : ColumnarData<Double> {
 
     override val size: Int get() = ps.size
 
@@ -37,5 +37,18 @@ public class FSS(public val ps: DoubleBuffer, public val es: DoubleBuffer) : Col
     public companion object {
         public val p: Symbol by symbol
         public val e: Symbol by symbol
+
+        public val default: FSS by lazy {
+            val stream = FSS::class.java.getResourceAsStream("/data/FS.txt") ?: error("Default FS resource not found")
+            stream.use { inputStream ->
+                val data = inputStream.bufferedReader().lineSequence().map {
+                    val (e, p) = it.split("\t")
+                    e.toDouble() to p.toDouble()
+                }.toList()
+                val es = DoubleBuffer(data.size) { data[it].first }
+                val ps = DoubleBuffer(data.size) { data[it].second }
+                FSS(es, ps)
+            }
+        }
     }
 }

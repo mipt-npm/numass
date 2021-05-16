@@ -167,9 +167,9 @@ public object NumassBeta : DifferentiableKernel {
     override val x: Symbol = StringSymbol("fs")
     override val y: Symbol = StringSymbol("eIn")
 
-    override fun invoke(x: Double, y: Double, arguments: Map<Symbol, Double>): Double {
+    override fun invoke(fs: Double, eIn: Double, arguments: Map<Symbol, Double>): Double {
         val e0 = arguments.getValue(e0)
-        return rootsterile(y, e0 - x, arguments)
+        return rootsterile(eIn, e0 - fs, arguments)
     }
 
     override fun derivativeOrNull(symbols: List<Symbol>): Kernel? = when (symbols.size) {
@@ -180,47 +180,12 @@ public object NumassBeta : DifferentiableKernel {
         }
         else -> null
     }
-//
-//    override fun getDefaultParameter(name: String): Double {
-//        return when (name) {
-//            "mnu2", "U2", "msterile2" -> 0.0
-//            else -> super.getDefaultParameter(name)
-//        }
-//    }
-//
-//    override fun derivValue(parName: String, fs: Double, eIn: Double, pars: Values): Double {
-//        val e0 = getParameter("E0", pars)
-//        return derivRootsterile(parName, eIn, e0 - fs, pars)
-//    }
-//
-//    /**
-//     * Get univariate spectrum with given final state
-//     */
-//    fun getSpectrum(fs: Double = 0.0): ParametricFunction {
-//        return BetaSpectrum(fs);
-//    }
-//
-//    inner class BetaSpectrum(val fs: Double) : AbstractParametricFunction(*list) {
-//
-//        override fun providesDeriv(name: String): Boolean {
-//            return this@NumassBeta.providesDeriv(name)
-//        }
-//
-//        override fun derivValue(parName: String, x: Double, set: Values): Double {
-//            return this@NumassBeta.derivValue(parName, fs, x, set)
-//        }
-//
-//        override fun value(x: Double, set: Values): Double {
-//            return this@NumassBeta.value(fs, x, set)
-//        }
-//
-//    }
 
 
-        private const val K: Double = 1E-23
-        public val e0: Symbol by symbol
-        public val mnu2: Symbol by symbol
-        public val msterile2: Symbol by symbol
-        public val u2: Symbol by symbol
+    private const val K: Double = 1E-23
+    public val e0: Symbol by symbol
+    public val mnu2: Symbol by symbol
+    public val msterile2: Symbol by symbol
+    public val u2: Symbol by symbol
 
 }
