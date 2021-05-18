@@ -67,10 +67,10 @@ public class NumassTransmission(
         else -> null
     }
 
-    override fun invoke(x: Double, y: Double, arguments: Map<Symbol, Double>): Double {
+    override fun invoke(ei: Double, ef: Double, arguments: Map<Symbol, Double>): Double {
         // loss part
         val thickness = arguments[thickness] ?: 0.0
-        val loss = getTotalLossValue(thickness, x, y)
+        val loss = getTotalLossValue(thickness, ei, ef)
         //        double loss;
         //
         //        if(eIn-eOut >= 300){
@@ -84,7 +84,7 @@ public class NumassTransmission(
         //        }
 
         //trapping part
-        val trap = arguments[trap] ?: 1.0 * trapFunc(x, y, arguments)
+        val trap = (arguments[trap] ?: 1.0) * trapFunc(ei, ef, arguments)
         return loss + trap
     }
 
@@ -155,13 +155,11 @@ public class NumassTransmission(
          * @param order
          * @return
          */
-        private fun getLoss(order: Int): UnivariateFunction<Double> {
-            return getCachedSpectrum(order)
-        }
+        private fun getLoss(order: Int): UnivariateFunction<Double> = getCachedSpectrum(order)
 
         private fun getLossProbDerivs(x: Double): List<Double> {
             val res = ArrayList<Double>()
-            val probs = getLossProbabilities(x)
+            val probs = lossProbabilities(x)
 
             var delta = exp(-x)
             res.add((delta - probs[0]) / x)
@@ -209,7 +207,7 @@ public class NumassTransmission(
             return res
         }
 
-        private fun getLossProbabilities(x: Double): List<Double> =
+        public fun lossProbabilities(x: Double): List<Double> =
             lossProbCache.getOrPut(x) { calculateLossProbabilities(x) }
 
         private fun getLossProbability(order: Int, X: Double): Double {
@@ -220,7 +218,7 @@ public class NumassTransmission(
                     1.0
                 }
             }
-            val probs = getLossProbabilities(X)
+            val probs = lossProbabilities(X)
             return if (order >= probs.size) {
                 0.0
             } else {
@@ -228,11 +226,11 @@ public class NumassTransmission(
             }
         }
 
-        private fun getLossValue(order: Int, Ei: Double, Ef: Double): Double {
+        private fun getLossValue(order: Int, ei: Double, ef: Double): Double {
             return when {
-                Ei - Ef < 5.0 -> 0.0
-                Ei - Ef >= getMargin(order) -> 0.0
-                else -> getLoss(order).invoke(Ei - Ef)
+                ei - ef < 5.0 -> 0.0
+                ei - ef >= getMargin(order) -> 0.0
+                else -> getLoss(order).invoke(ei - ef)
             }
         }
 
@@ -303,17 +301,17 @@ public class NumassTransmission(
         /**
          * Значение полной функции потерь с учетом всех неисчезающих порядков
          *
-         * @param x
+         * @param thickness
          * @param Ei
          * @param Ef
          * @return
          */
-        private fun getTotalLossValue(x: Double, Ei: Double, Ef: Double): Double {
-            return if (x == 0.0) {
+        private fun getTotalLossValue(thickness: Double, Ei: Double, Ef: Double): Double {
+            return if (thickness == 0.0) {
                 0.0
             } else {
-                val probs = getLossProbabilities(x)
-                (1 until probs.size).sumByDouble { i ->
+                val probs = lossProbabilities(thickness)
+                (1 until probs.size).sumOf { i ->
                     probs[i] * getLossValue(i, Ei, Ef)
                 }
             }
@@ -468,9 +466,8 @@ public class NumassTransmission(
 //
 //        }
 
-        internal val defaultTrapping: Kernel = Kernel { e, u, arguments ->
-            val d = e - u
-            0.99797 - 3.05346E-7 * d - 5.45738E-10 * d.pow(2.0) - 6.36105E-14 * d.pow(3.0)
+        internal val defaultTrapping: Kernel = Kernel { ei, ef, _ ->
+            1.2e-4 - 4.5e-9 * ei
         }
     }
 

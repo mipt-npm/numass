@@ -33,7 +33,6 @@ public class SterileNeutrinoSpectrum(
     public val fss: FSS? = FSS.default,
 ) : DifferentiableSpectrum {
 
-
     /**
      * auxiliary function for trans-res convolution
      */

@@ -42,5 +42,9 @@ public class NBkgSpectrum(public val source: Spectrum) : DifferentiableSpectrum 
         public val norm: Symbol by symbol
         public val bkg: Symbol by symbol
     }
-
 }
+
+/**
+ * Apply transformation adding norming-factor and the background
+ */
+public fun Spectrum.withNBkg(): NBkgSpectrum = NBkgSpectrum(this)

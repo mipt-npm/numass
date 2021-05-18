@@ -19,12 +19,14 @@ import space.kscience.kmath.data.ColumnarData
 import space.kscience.kmath.misc.Symbol
 import space.kscience.kmath.misc.UnstableKMathAPI
 import space.kscience.kmath.misc.symbol
+import space.kscience.kmath.real.div
+import space.kscience.kmath.real.sum
 import space.kscience.kmath.structures.Buffer
 import space.kscience.kmath.structures.DoubleBuffer
 
 
 @OptIn(UnstableKMathAPI::class)
-public class FSS(public val es: DoubleBuffer, public val ps: DoubleBuffer) : ColumnarData<Double> {
+public class FSS(public val es: Buffer<Double>, public val ps: Buffer<Double>) : ColumnarData<Double> {
 
     override val size: Int get() = ps.size
 
@@ -47,7 +49,7 @@ public class FSS(public val es: DoubleBuffer, public val ps: DoubleBuffer) : Col
                 }.toList()
                 val es = DoubleBuffer(data.size) { data[it].first }
                 val ps = DoubleBuffer(data.size) { data[it].second }
-                FSS(es, ps)
+                FSS(es, ps / ps.sum())
             }
         }
     }
