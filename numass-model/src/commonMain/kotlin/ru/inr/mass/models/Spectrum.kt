@@ -2,7 +2,7 @@ package ru.inr.mass.models
 
 import space.kscience.kmath.expressions.DifferentiableExpression
 import space.kscience.kmath.expressions.Expression
-import space.kscience.kmath.misc.Symbol
+import space.kscience.kmath.expressions.Symbol
 
 public fun interface Spectrum : Expression<Double> {
     public val abscissa: Symbol get() = Symbol.x

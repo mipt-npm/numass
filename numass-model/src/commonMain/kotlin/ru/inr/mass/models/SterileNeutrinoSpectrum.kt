@@ -3,23 +3,25 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package inr.numass.models.sterile
+package ru.inr.mass.models
 
 
-import inr.numass.models.sterile.NumassBeta.e0
-import inr.numass.models.sterile.NumassBeta.mnu2
-import inr.numass.models.sterile.NumassBeta.msterile2
-import inr.numass.models.sterile.NumassBeta.u2
-import inr.numass.models.sterile.NumassTransmission.Companion.thickness
-import inr.numass.models.sterile.NumassTransmission.Companion.trap
-import ru.inr.mass.models.*
+import ru.inr.mass.models.NumassBeta.e0
+import ru.inr.mass.models.NumassBeta.mnu2
+import ru.inr.mass.models.NumassBeta.msterile2
+import ru.inr.mass.models.NumassBeta.u2
+import ru.inr.mass.models.NumassTransmission.Companion.thickness
+import ru.inr.mass.models.NumassTransmission.Companion.trap
+import space.kscience.kmath.expressions.Symbol
 import space.kscience.kmath.expressions.derivative
+import space.kscience.kmath.integration.UnivariateIntegrandRanges
+import space.kscience.kmath.integration.gaussIntegrator
 import space.kscience.kmath.integration.integrate
-import space.kscience.kmath.integration.integrator
 import space.kscience.kmath.integration.value
-import space.kscience.kmath.misc.Symbol
 import space.kscience.kmath.operations.DoubleField
-import kotlin.math.min
+import space.kscience.kmath.real.step
+import space.kscience.kmath.structures.toDoubleArray
+
 
 /**
  * @param source variables:Eo offset,Ein; parameters: "mnu2", "msterile2", "U2"
@@ -30,7 +32,7 @@ public class SterileNeutrinoSpectrum(
     public val source: DifferentiableKernel = NumassBeta,
     public val transmission: DifferentiableKernel = NumassTransmission(),
     public val resolution: DifferentiableKernel = NumassResolution(),
-    public val fss: FSS? = FSS.default,
+    public val fss: FSS? = null,
 ) : DifferentiableSpectrum {
 
     /**
@@ -91,9 +93,16 @@ public class SterileNeutrinoSpectrum(
 //            getHighDensityIntegrator()
 //        }
 
-        return DoubleField.integrator.integrate(u..eMax) { eIn ->
+        return DoubleField.gaussIntegrator.integrate(u..eMax, generateRanges(
+            u..eMax,
+            u + 2.0,
+            u + 7.0,
+            u + 15.0,
+            u + 30.0,
+            *((u + 50)..(u + 6000) step 25.0).toDoubleArray()
+        )) { eIn ->
             sumByFSS(eIn, sourceFunction, arguments) * transResFunction(eIn, u, arguments)
-        }.value ?: error("Integration failed")
+        }.value
     }
 
     private fun sumByFSS(eIn: Double, sourceFunction: Kernel, arguments: Map<Symbol, Double>): Double {
@@ -121,20 +130,35 @@ public class SterileNeutrinoSpectrum(
             }
         }
 
-        private fun lossRes(transFunc: Kernel, eIn: Double, u: Double, arguments: Map<Symbol, Double>): Double {
-            val integrand = { eOut: Double -> transFunc(eIn, eOut, arguments) * resolution(eOut, u, arguments) }
-
-            val border = u + 30
-            val firstPart = DoubleField.integrator.integrate(u..min(eIn, border), function = integrand).value
-            val secondPart: Double = if (eIn > border) {
-                DoubleField.integrator.integrate(border..eIn, function = integrand).value
-            } else {
-                0.0
-            }
-            return firstPart + secondPart
-        }
-
+        private fun lossRes(
+            transFunc: Kernel,
+            eIn: Double,
+            u: Double,
+            arguments: Map<Symbol, Double>,
+        ): Double = DoubleField.gaussIntegrator.integrate(u..eIn, generateRanges(
+            u..eIn,
+            *((u + 25)..(u + 6000) step 25.0).toDoubleArray()
+        )) { eOut: Double ->
+            transFunc(eIn, eOut, arguments) * resolution(eOut, u, arguments)
+        }.value
     }
 
     public companion object
+}
+
+
+internal fun generateRanges(
+    range: ClosedFloatingPointRange<Double>,
+    vararg borders: Double,
+    points: Int = 5,
+): UnivariateIntegrandRanges {
+    if (borders.isEmpty() || borders.first() > range.endInclusive) return UnivariateIntegrandRanges(range to points)
+    val ranges = listOf(
+        range.start,
+        *borders.filter { it in range }.sorted().toTypedArray(),
+        range.endInclusive
+    ).zipWithNext { l, r ->
+        l..r to points
+    }
+    return UnivariateIntegrandRanges(ranges)
 }

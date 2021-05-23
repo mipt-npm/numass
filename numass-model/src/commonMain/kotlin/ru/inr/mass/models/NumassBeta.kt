@@ -3,13 +3,11 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package inr.numass.models.sterile
+package ru.inr.mass.models
 
-import ru.inr.mass.models.DifferentiableKernel
-import ru.inr.mass.models.Kernel
-import space.kscience.kmath.misc.StringSymbol
-import space.kscience.kmath.misc.Symbol
-import space.kscience.kmath.misc.symbol
+import space.kscience.kmath.expressions.StringSymbol
+import space.kscience.kmath.expressions.Symbol
+import space.kscience.kmath.expressions.symbol
 import kotlin.math.*
 
 /**

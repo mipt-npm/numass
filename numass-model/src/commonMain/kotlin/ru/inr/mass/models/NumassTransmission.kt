@@ -3,26 +3,20 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package inr.numass.models.sterile
+package ru.inr.mass.models
 
-import ru.inr.mass.models.DifferentiableKernel
-import ru.inr.mass.models.Kernel
-import ru.inr.mass.models.cache
+import space.kscience.kmath.expressions.Symbol
+import space.kscience.kmath.expressions.symbol
 import space.kscience.kmath.functions.PiecewisePolynomial
 import space.kscience.kmath.functions.UnivariateFunction
-import space.kscience.kmath.functions.value
+import space.kscience.kmath.functions.asFunction
 import space.kscience.kmath.integration.GaussIntegrator
 import space.kscience.kmath.integration.integrate
 import space.kscience.kmath.integration.value
-import space.kscience.kmath.misc.Symbol
-import space.kscience.kmath.misc.symbol
 import space.kscience.kmath.operations.DoubleField
+import kotlin.jvm.Synchronized
 import kotlin.math.*
 
-
-public fun PiecewisePolynomial<Double>.asFunction(defaultValue: Double = 0.0): UnivariateFunction<Double> = {
-    value(DoubleField, it) ?: defaultValue
-}
 
 /**
  * @author [Alexander Nozik](mailto:altavir@gmail.com)
@@ -144,7 +138,7 @@ public class NumassTransmission(
                 order == 1 -> singleScatterFunction
                 else -> cache.getOrPut(order) {
                     //LoggerFactory.getLogger(javaClass).debug("Scatter cache of order {} not found. Updating", order)
-                    getNextLoss(getMargin(order), getCachedSpectrum(order - 1)).asFunction()
+                    getNextLoss(getMargin(order), getCachedSpectrum(order - 1)).asFunction(DoubleField, 0.0)
                 }
             }
         }

@@ -16,13 +16,10 @@
 package ru.inr.mass.models
 
 import space.kscience.kmath.data.ColumnarData
-import space.kscience.kmath.misc.Symbol
+import space.kscience.kmath.expressions.Symbol
+import space.kscience.kmath.expressions.symbol
 import space.kscience.kmath.misc.UnstableKMathAPI
-import space.kscience.kmath.misc.symbol
-import space.kscience.kmath.real.div
-import space.kscience.kmath.real.sum
 import space.kscience.kmath.structures.Buffer
-import space.kscience.kmath.structures.DoubleBuffer
 
 
 @OptIn(UnstableKMathAPI::class)
@@ -39,18 +36,5 @@ public class FSS(public val es: Buffer<Double>, public val ps: Buffer<Double>) :
     public companion object {
         public val p: Symbol by symbol
         public val e: Symbol by symbol
-
-        public val default: FSS by lazy {
-            val stream = FSS::class.java.getResourceAsStream("/data/FS.txt") ?: error("Default FS resource not found")
-            stream.use { inputStream ->
-                val data = inputStream.bufferedReader().lineSequence().map {
-                    val (e, p) = it.split("\t")
-                    e.toDouble() to p.toDouble()
-                }.toList()
-                val es = DoubleBuffer(data.size) { data[it].first }
-                val ps = DoubleBuffer(data.size) { data[it].second }
-                FSS(es, ps / ps.sum())
-            }
-        }
     }
 }
