@@ -35,34 +35,35 @@ fun main() {
     )
 
     Plotly.page {
+
+        plot {
+            scatter {
+                name = "Computed spectrum"
+                mode = ScatterMode.lines
+                x.buffer = 14000.0..18600.0 step 10.0
+                y.numbers = x.doubles.map { spectrum(it, args) }
+            }
+            layout {
+                title = "Sterile neutrino spectrum"
+                yaxis.type = AxisType.log
+            }
+        }
+
         val spectrumTime = measureTimeMillis {
             plot {
                 scatter {
-                    name = "Computed spectrum"
-                    mode = ScatterMode.lines
-                    x.buffer = 14000.0..18600.0 step 10.0
-                    y.numbers = x.doubles.map { spectrum(it, args) }
+                    mode = ScatterMode.markers
+                    javaClass.getResource("/old-spectrum.dat").readText().lines().map {
+                        val (u, w) = it.split("\t").map { it.toDouble() }
+                        appendXY(u, w / spectrum(u, args) - 1.0)
+                    }
                 }
                 layout {
-                    title = "Sterile neutrino spectrum"
-                    yaxis.type = AxisType.log
+                    title = "Sterile neutrino old/new ratio"
                 }
             }
         }
         println("Spectrum with 460 points computed in $spectrumTime millis")
-
-        plot {
-            scatter {
-                mode = ScatterMode.markers
-                javaClass.getResource("/old-spectrum.dat").readText().lines().map {
-                    val (u, w) = it.split("\t").map { it.toDouble() }
-                    appendXY(u, w / spectrum(u, args) - 1.0)
-                }
-            }
-            layout {
-                title = "Sterile neutrino old/new ratio"
-            }
-        }
         plot {
             val resolution = NumassResolution()
             scatter {

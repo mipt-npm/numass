@@ -10,9 +10,7 @@ import space.kscience.kmath.expressions.symbol
 import space.kscience.kmath.functions.PiecewisePolynomial
 import space.kscience.kmath.functions.UnivariateFunction
 import space.kscience.kmath.functions.asFunction
-import space.kscience.kmath.integration.GaussIntegrator
-import space.kscience.kmath.integration.integrate
-import space.kscience.kmath.integration.value
+import space.kscience.kmath.integration.*
 import space.kscience.kmath.operations.DoubleField
 import kotlin.jvm.Synchronized
 import kotlin.math.*
@@ -251,7 +249,7 @@ public class NumassTransmission(
          * @return
          */
         private fun getMargin(order: Int): Double {
-            return 80 + order * 50.0
+            return 50 + order * 50.0
         }
 
         /**
@@ -264,13 +262,12 @@ public class NumassTransmission(
         @Synchronized
         private fun getNextLoss(margin: Double, loss: UnivariateFunction<Double>): PiecewisePolynomial<Double> {
             val res = { x: Double ->
-                integrator.integrate(5.0..margin) { y ->
+                DoubleField.simpsonIntegrator.integrate(5.0..margin, IntegrandMaxCalls(200)) { y ->
                     loss(x - y) * singleScatterFunction(y)
                 }.value
             }
 
-            return res.cache(0.0..margin, 200)
-
+            return res.cache(0.0..margin, 100)
         }
 
         /**
@@ -316,7 +313,6 @@ public class NumassTransmission(
          * порог по вероятности, до которого вычисляются компоненты функции потерь
          */
         private const val SCATTERING_PROBABILITY_THRESHOLD = 1e-3
-        private val integrator = GaussIntegrator(DoubleField)
         private val lossProbCache = HashMap<Double, List<Double>>(100)
 
 
@@ -343,48 +339,48 @@ public class NumassTransmission(
         }
 
 
-        /**
-         * A generic loss function for numass experiment in "Lobashev"
-         * parameterization
-         *
-         * @param exPos
-         * @param ionPos
-         * @param exW
-         * @param ionW
-         * @param exIonRatio
-         * @return
-         */
-        public fun getSingleScatterFunction(
-            exPos: Double,
-            ionPos: Double,
-            exW: Double,
-            ionW: Double,
-            exIonRatio: Double,
-        ): UnivariateFunction<Double> {
-            val func: UnivariateFunction<Double> = { eps: Double ->
-                if (eps <= 0) {
-                    0.0
-                } else {
-                    val z1 = eps - exPos
-                    val ex = exIonRatio * exp(-2.0 * z1 * z1 / exW / exW)
-
-                    val z = 4.0 * (eps - ionPos) * (eps - ionPos)
-                    val ion = 1 / (1 + z / ionW / ionW)
-
-                    if (eps < exPos) {
-                        ex
-                    } else {
-                        max(ex, ion)
-                    }
-                }
-            }
-
-            val cutoff = 25.0
-            //caclulating lorentz integral analythically
-            val tailNorm = (atan((ionPos - cutoff) * 2.0 / ionW) + 0.5 * PI) * ionW / 2.0
-            val norm: Double = integrator.integrate(range = 0.0..cutoff, function = func).value + tailNorm
-            return { e -> func(e) / norm }
-        }
+//        /**
+//         * A generic loss function for numass experiment in "Lobashev"
+//         * parameterization
+//         *
+//         * @param exPos
+//         * @param ionPos
+//         * @param exW
+//         * @param ionW
+//         * @param exIonRatio
+//         * @return
+//         */
+//        public fun getSingleScatterFunction(
+//            exPos: Double,
+//            ionPos: Double,
+//            exW: Double,
+//            ionW: Double,
+//            exIonRatio: Double,
+//        ): UnivariateFunction<Double> {
+//            val func: UnivariateFunction<Double> = { eps: Double ->
+//                if (eps <= 0) {
+//                    0.0
+//                } else {
+//                    val z1 = eps - exPos
+//                    val ex = exIonRatio * exp(-2.0 * z1 * z1 / exW / exW)
+//
+//                    val z = 4.0 * (eps - ionPos) * (eps - ionPos)
+//                    val ion = 1 / (1 + z / ionW / ionW)
+//
+//                    if (eps < exPos) {
+//                        ex
+//                    } else {
+//                        max(ex, ion)
+//                    }
+//                }
+//            }
+//
+//            val cutoff = 25.0
+//            //calculating lorentz integral analytically
+//            val tailNorm = (atan((ionPos - cutoff) * 2.0 / ionW) + 0.5 * PI) * ionW / 2.0
+//            val norm: Double = integrator.integrate(range = 0.0..cutoff, function = func).value + tailNorm
+//            return { e -> func(e) / norm }
+//        }
 
 
         public val exPos: Symbol by symbol
@@ -393,15 +389,15 @@ public class NumassTransmission(
         public val ionW: Symbol by symbol
         public val exIonRatio: Symbol by symbol
 
-        public fun getSingleScatterFunction(set: Map<Symbol, Double>): UnivariateFunction<Double> {
-            val exPos = set.getValue(exPos)
-            val ionPos = set.getValue(ionPos)
-            val exW = set.getValue(exW)
-            val ionW = set.getValue(ionW)
-            val exIonRatio = set.getValue(exIonRatio)
-
-            return getSingleScatterFunction(exPos, ionPos, exW, ionW, exIonRatio)
-        }
+//        public fun getSingleScatterFunction(set: Map<Symbol, Double>): UnivariateFunction<Double> {
+//            val exPos = set.getValue(exPos)
+//            val ionPos = set.getValue(ionPos)
+//            val exW = set.getValue(exW)
+//            val ionW = set.getValue(ionW)
+//            val exIonRatio = set.getValue(exIonRatio)
+//
+//            return getSingleScatterFunction(exPos, ionPos, exW, ionW, exIonRatio)
+//        }
 
         public val trapFunction: (Double, Double) -> Double = { Ei: Double, Ef: Double ->
             val eps = Ei - Ef

@@ -137,7 +137,11 @@ public class SterileNeutrinoSpectrum(
             arguments: Map<Symbol, Double>,
         ): Double = DoubleField.gaussIntegrator.integrate(u..eIn, generateRanges(
             u..eIn,
-            *((u + 25)..(u + 6000) step 25.0).toDoubleArray()
+            u + 2.0,
+            u + 7.0,
+            u + 15.0,
+            u + 30.0,
+            *((u + 50)..(u + 6000) step 30.0).toDoubleArray()
         )) { eOut: Double ->
             transFunc(eIn, eOut, arguments) * resolution(eOut, u, arguments)
         }.value
