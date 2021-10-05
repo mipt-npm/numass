@@ -10,23 +10,22 @@ import space.kscience.dataforge.values.double
 import space.kscience.kmath.histogram.UnivariateHistogram
 import space.kscience.kmath.histogram.center
 import space.kscience.kmath.misc.UnstableKMathAPI
+import space.kscience.kmath.operations.asIterable
 import space.kscience.kmath.structures.Buffer
 import space.kscience.kmath.structures.DoubleBuffer
-import space.kscience.kmath.structures.asIterable
 import space.kscience.plotly.*
+import space.kscience.plotly.models.Scatter
 import space.kscience.plotly.models.Trace
 import space.kscience.plotly.models.TraceValues
 
+/**
+ * Plot a kmath histogram
+ */
 @OptIn(UnstableKMathAPI::class)
-fun Trace.fromSpectrum(histogram: UnivariateHistogram) {
+fun Plot.histogram(histogram: UnivariateHistogram, block: Scatter.() -> Unit): Trace = scatter {
     x.numbers = histogram.bins.map { it.domain.center }
     y.numbers = histogram.bins.map { it.value }
-}
-
-@OptIn(UnstableKMathAPI::class)
-fun Plot.spectrum(name: String, histogram: UnivariateHistogram): Trace = scatter {
-    this.name = name
-    fromSpectrum(histogram)
+    block()
 }
 
 fun Plot.amplitudeSpectrum(
@@ -35,7 +34,9 @@ fun Plot.amplitudeSpectrum(
     range: IntRange = 0..2000,
     name: String = point.toString(),
 ): Trace = scatter {
-    spectrum(name, point.spectrum().reShape(binSize, range))
+    histogram(point.spectrum().reShape(binSize, range)) {
+        this.name = name
+    }
 }
 
 /**
@@ -59,6 +60,7 @@ fun Plotly.numassDirectory(set: NumassDirectorySet, binSize: Int = 20, range: In
                 amplitudeSpectrum(it, binSize, range)
             }
         }
+
         set.getHvData()?.let { entries ->
             h2 {
                 +"HV"

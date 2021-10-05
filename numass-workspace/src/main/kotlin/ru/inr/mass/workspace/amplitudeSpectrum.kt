@@ -1,3 +1,4 @@
+@file:Suppress("EXPERIMENTAL_API_USAGE")
 package ru.inr.mass.workspace
 
 import kotlinx.coroutines.flow.collect
@@ -14,11 +15,13 @@ import space.kscience.kmath.structures.asBuffer
 
 
 /**
- * Build an amplitude spectrum
+ * Build an amplitude spectrum with bin of 1.0 counted from 0.0. Some bins could be missing
  */
 fun NumassPoint.spectrum(): UnivariateHistogram = UnivariateHistogram.uniform(1.0) {
     runBlocking {
-        events.collect { put(it.amplitude.toDouble()) }
+        events.collect {
+            putValue(it.amplitude.toDouble())
+        }
     }
 }
 

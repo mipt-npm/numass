@@ -1,7 +1,7 @@
 package ru.inr.mass.models
 
-import space.kscience.kmath.expressions.DifferentiableExpression
 import space.kscience.kmath.expressions.Expression
+import space.kscience.kmath.expressions.SpecialDifferentiableExpression
 import space.kscience.kmath.expressions.Symbol
 
 public fun interface Spectrum : Expression<Double> {
@@ -13,7 +13,7 @@ public fun interface Spectrum : Expression<Double> {
         invoke(arguments[abscissa] ?: error("Argument $abscissa not found in arguments"), arguments)
 }
 
-public interface DifferentiableSpectrum : DifferentiableExpression<Double, Spectrum>, Spectrum
+public interface DifferentiableSpectrum : SpecialDifferentiableExpression<Double, Spectrum>, Spectrum
 
 public fun interface Kernel : Expression<Double> {
     public val x: Symbol get() = Symbol.x
@@ -28,7 +28,7 @@ public fun interface Kernel : Expression<Double> {
     }
 }
 
-public interface DifferentiableKernel : DifferentiableExpression<Double, Kernel>, Kernel
+public interface DifferentiableKernel : SpecialDifferentiableExpression<Double, Kernel>, Kernel
 
 public fun <T> Expression<T>.withDefault(default: Map<Symbol, T>): Expression<T> = Expression { args ->
     invoke(default + args)

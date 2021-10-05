@@ -1,7 +1,8 @@
 package ru.inr.mass
 
 import ru.inr.mass.models.*
-import space.kscience.kmath.misc.Symbol
+import space.kscience.kmath.expressions.Symbol
+
 import kotlin.math.abs
 import kotlin.math.pow
 import kotlin.math.sqrt

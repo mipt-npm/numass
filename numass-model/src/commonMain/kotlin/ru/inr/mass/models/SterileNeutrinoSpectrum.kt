@@ -93,14 +93,16 @@ public class SterileNeutrinoSpectrum(
 //            getHighDensityIntegrator()
 //        }
 
-        return DoubleField.gaussIntegrator.integrate(u..eMax, generateRanges(
-            u..eMax,
-            u + 2.0,
-            u + 7.0,
-            u + 15.0,
-            u + 30.0,
-            *((u + 50)..(u + 6000) step 25.0).toDoubleArray()
-        )) { eIn ->
+        return DoubleField.gaussIntegrator.integrate(
+            u..eMax, generateRanges(
+                u..eMax,
+                u + 2.0,
+                u + 7.0,
+                u + 15.0,
+                u + 30.0,
+                *((u + 50)..(u + 6000) step 25.0).toDoubleArray()
+            )
+        ) { eIn ->
             sumByFSS(eIn, sourceFunction, arguments) * transResFunction(eIn, u, arguments)
         }.value
     }
@@ -135,14 +137,16 @@ public class SterileNeutrinoSpectrum(
             eIn: Double,
             u: Double,
             arguments: Map<Symbol, Double>,
-        ): Double = DoubleField.gaussIntegrator.integrate(u..eIn, generateRanges(
-            u..eIn,
-            u + 2.0,
-            u + 7.0,
-            u + 15.0,
-            u + 30.0,
-            *((u + 50)..(u + 6000) step 30.0).toDoubleArray()
-        )) { eOut: Double ->
+        ): Double = DoubleField.gaussIntegrator.integrate(
+            u..eIn, generateRanges(
+                u..eIn,
+                u + 2.0,
+                u + 7.0,
+                u + 15.0,
+                u + 30.0,
+                *((u + 50)..(u + 6000) step 30.0).toDoubleArray()
+            )
+        ) { eOut: Double ->
             transFunc(eIn, eOut, arguments) * resolution(eOut, u, arguments)
         }.value
     }

@@ -13,7 +13,7 @@ allprojects {
 }
 
 val dataforgeVersion by extra("0.4.0")
-val kmathVersion by extra("0.3.0-dev-13")
+val kmathVersion by extra("0.3.0-dev-15")
 
 ksciencePublish{
     vcs("https://mipt-npm.jetbrains.space/p/numass/code/numass/")

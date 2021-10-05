@@ -5,7 +5,6 @@
  */
 package ru.inr.mass.models
 
-import space.kscience.kmath.expressions.StringSymbol
 import space.kscience.kmath.expressions.Symbol
 import space.kscience.kmath.expressions.symbol
 import kotlin.math.*
@@ -162,8 +161,8 @@ public object NumassBeta : DifferentiableKernel {
 // P(rootsterile)+ (1-P)root
     }
 
-    override val x: Symbol = StringSymbol("fs")
-    override val y: Symbol = StringSymbol("eIn")
+    override val x: Symbol = Symbol("fs")
+    override val y: Symbol = Symbol("eIn")
 
     override fun invoke(fs: Double, eIn: Double, arguments: Map<Symbol, Double>): Double {
         val e0 = arguments.getValue(e0)

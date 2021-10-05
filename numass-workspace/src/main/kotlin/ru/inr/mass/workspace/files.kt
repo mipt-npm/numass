@@ -20,14 +20,13 @@ import kotlin.streams.toList
 fun readNumassDirectory(path: String): NumassDirectorySet = NUMASS.context.readNumassDirectory(path)
 
 @OptIn(ExperimentalPathApi::class)
-suspend fun readNumassRepository(path: String): DataTree<NumassDirectorySet> = ActiveDataTree {
-    val basePath = Path.of(path)
+suspend fun readNumassRepository(path: Path): DataTree<NumassDirectorySet> = ActiveDataTree {
     @Suppress("BlockingMethodInNonBlockingContext")
     withContext(Dispatchers.IO) {
-        Files.walk(Path.of(path)).filter {
+        Files.walk(path).filter {
             it.isDirectory() && it.resolve("meta").exists()
         }.toList().forEach { childPath ->
-            val name = Name(childPath.relativeTo(basePath).map { segment ->
+            val name = Name(childPath.relativeTo(path).map { segment ->
                 NameToken(segment.fileName.toString())
             })
             val value = NUMASS.context.readNumassDirectory(childPath)
@@ -36,3 +35,5 @@ suspend fun readNumassRepository(path: String): DataTree<NumassDirectorySet> = A
     }
     //TODO add file watcher
 }
+
+suspend fun readNumassRepository(path: String): DataTree<NumassDirectorySet> = readNumassRepository(Path.of(path))
