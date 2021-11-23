@@ -5,7 +5,6 @@ import space.kscience.dataforge.workspace.Workspace
 
 val NUMASS = Workspace {
     context{
-        name("NUMASS")
         plugin(NumassProtoPlugin)
     }
 }

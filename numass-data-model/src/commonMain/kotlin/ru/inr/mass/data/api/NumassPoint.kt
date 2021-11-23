@@ -16,18 +16,20 @@
 
 package ru.inr.mass.data.api
 
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.*
 import space.kscience.dataforge.meta.Meta
 import space.kscience.dataforge.meta.double
 import space.kscience.dataforge.meta.get
 import space.kscience.dataforge.meta.int
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.DurationUnit
-import kotlin.time.nanoseconds
 
 /**
  * Created by darksnake on 06-Jul-17.
  */
+@OptIn(FlowPreview::class)
 public interface NumassPoint : ParentBlock {
 
     public val meta: Meta
@@ -57,8 +59,8 @@ public interface NumassPoint : ParentBlock {
     /**
      * Get the length key of meta or calculate length as a sum of block lengths. The latter could be a bit slow
      */
-    override suspend fun getLength(): Duration =
-        flowBlocks().filter { it.channel == 0 }.toList().sumOf { it.getLength().toDouble(DurationUnit.NANOSECONDS) }.nanoseconds
+    override suspend fun getLength(): Duration = flowBlocks().filter { it.channel == 0 }.toList()
+        .sumOf { it.getLength().toLong(DurationUnit.NANOSECONDS) }.nanoseconds
 
     /**
      * Get all events it all blocks as a single sequence

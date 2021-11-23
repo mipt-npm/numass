@@ -25,10 +25,10 @@ import kotlinx.datetime.plus
 import kotlin.time.Duration
 
 public open class OrphanNumassEvent(
-    public val amplitude: Short,
+    public val amplitude: UShort,
     public val timeOffset: Long,
 ) : Comparable<OrphanNumassEvent> {
-    public operator fun component1(): Short = amplitude
+    public operator fun component1(): UShort = amplitude
     public operator fun component2(): Long = timeOffset
 
     override fun compareTo(other: OrphanNumassEvent): Int {
@@ -46,7 +46,7 @@ public open class OrphanNumassEvent(
  *
  */
 public class NumassEvent(
-    amplitude: Short,
+    amplitude: UShort,
     timeOffset: Long,
     public val owner: NumassBlock,
 ) : OrphanNumassEvent(amplitude, timeOffset)
@@ -74,10 +74,14 @@ public interface NumassBlock {
      */
     public suspend fun getLength(): Duration
 
+    public val eventsCount: Long
+
     /**
      * Stream of isolated events. Could be empty
      */
     public val events: Flow<NumassEvent>
+
+    public val framesCount: Long
 
     /**
      * Stream of frames. Could be empty
@@ -108,6 +112,9 @@ public class SimpleBlock(
     override val frames: Flow<NumassFrame> get() = emptyFlow()
 
     override val events: Flow<NumassEvent> get() = eventList.asFlow()
+
+    override val eventsCount: Long get() = eventList.size.toLong()
+    override val framesCount: Long get() = 0L
 
     public companion object {
 

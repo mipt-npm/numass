@@ -2,13 +2,12 @@ pluginManagement {
     repositories {
         maven("https://repo.kotlin.link")
         mavenCentral()
-        jcenter()
         gradlePluginPortal()
         mavenLocal()
     }
 
-    val toolsVersion = "0.9.9"
-    val kotlinVersion = "1.5.0"
+    val toolsVersion = "0.10.7"
+    val kotlinVersion = "1.6.0"
 
     plugins {
         id("ru.mipt.npm.gradle.project") version toolsVersion
@@ -30,7 +29,10 @@ pluginManagement {
     }
 }
 
-include("numass-data-model")
-include("numass-data-proto")
-include("numass-workspace")
-include("numass-model")
+include(
+    ":numass-data-model",
+    ":numass-analysis",
+    ":numass-data-proto",
+    ":numass-workspace",
+    ":numass-model"
+)

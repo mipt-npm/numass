@@ -32,6 +32,8 @@ import java.io.ByteArrayOutputStream
 import java.io.InputStream
 import java.util.zip.Inflater
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.nanoseconds
 
 /**
  * Protobuf based numass point
@@ -42,7 +44,7 @@ internal class ProtoNumassPoint(
     private val protoBuilder: () -> Point,
 ) : NumassPoint {
 
-    val point by lazy(protoBuilder)
+    val point: Point by lazy(protoBuilder)
 
     override fun flowBlocks() = point.channels.flatMap { channel ->
         channel.blocks
@@ -65,8 +67,22 @@ internal class ProtoNumassPoint(
         } ?: Instant.DISTANT_PAST
 
     override suspend fun getLength(): Duration = meta["acquisition_time"].double?.let {
-        Duration.milliseconds(it * 1000)
+        (it * 1000).milliseconds
     } ?: super.getLength()
+
+    override val eventsCount: Long
+        get() = point.channels.sumOf { channel ->
+            channel.blocks.sumOf { block ->
+                block.events?.amplitudes?.size ?: 0
+            }.toLong()
+        }
+
+    override val framesCount: Long
+        get() = point.channels.sumOf { channel ->
+            channel.blocks.sumOf { block ->
+                block.frames.size ?: 0
+            }.toLong()
+        }
 
     override fun toString(): String = "ProtoNumassPoint(index = ${index}, hv = $voltage)"
 
@@ -128,15 +144,15 @@ public class ProtoNumassBlock(
         }
 
     override suspend fun getLength(): Duration = when {
-        block.length > 0 -> Duration.nanoseconds(block.length)
-        parent?.meta["acquisition_time"] != null ->
-            Duration.milliseconds((parent?.meta["acquisition_time"].double ?: 0.0 * 1000))
+        block.length > 0 -> block.length.nanoseconds
+        parent?.meta?.get("acquisition_time") != null ->
+            (parent.meta["acquisition_time"].double ?: (0.0 * 1000)).milliseconds
         else -> {
             LoggerFactory.getLogger(javaClass)
                 .error("No length information on block. Trying to infer from first and last events")
             val times = runBlocking { events.map { it.timeOffset }.toList() }
             val nanos = (times.maxOrNull()!! - times.minOrNull()!!)
-            Duration.nanoseconds(nanos)
+            nanos.nanoseconds
         }
     }
 
@@ -152,7 +168,7 @@ public class ProtoNumassBlock(
             }
 
             amplitudes.zip(times) { amp, time ->
-                NumassEvent(amp.toShort(), time, this)
+                NumassEvent(amp.toUShort(), time, this)
             }.asFlow()
 
         } else {
@@ -170,11 +186,14 @@ public class ProtoNumassBlock(
 
     override val frames: Flow<NumassFrame>
         get() {
-            val tickSize = Duration.nanoseconds(block.bin_size)
+            val tickSize = block.bin_size.nanoseconds
             return block.frames.asFlow().map { frame ->
                 val time = startTime.plus(frame.time, DateTimeUnit.NANOSECOND)
                 val frameData = frame.data_
                 NumassFrame(time, tickSize, frameData.toShortArray())
             }
         }
+
+    override val eventsCount: Long get() = block.frames.size.toLong()
+    override val framesCount: Long get() = block.events?.amplitudes?.size?.toLong() ?: 0L
 }

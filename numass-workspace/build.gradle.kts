@@ -16,6 +16,7 @@ val kmathVersion: String by rootProject.extra
 dependencies {
     implementation(project(":numass-data-proto"))
     implementation(project(":numass-model"))
+    implementation(project(":numass-analysis"))
     implementation("space.kscience:dataforge-workspace:$dataforgeVersion")
     implementation("space.kscience:plotlykt-core:$plotlyVersion")
     implementation("space.kscience:kmath-histograms:$kmathVersion")

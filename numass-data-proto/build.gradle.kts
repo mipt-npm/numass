@@ -2,10 +2,7 @@ plugins {
     kotlin("jvm")
     id("ru.mipt.npm.gradle.common")
     id("com.squareup.wire") version "3.5.0"
-}
-
-kscience{
-    publish()
+    `maven-publish`
 }
 
 val dataforgeVersion: String by rootProject.extra

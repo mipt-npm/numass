@@ -3,6 +3,7 @@ package ru.inr.mass.data.api
 import kotlinx.coroutines.flow.*
 import kotlinx.datetime.Instant
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.DurationUnit
 
 public interface ParentBlock : NumassBlock {
@@ -19,7 +20,7 @@ public interface ParentBlock : NumassBlock {
  * A block constructed from a set of other blocks. Internal blocks are not necessary subsequent. Blocks are automatically sorted.
  * Created by darksnake on 16.07.2017.
  */
-public class MetaBlock(private val blocks: List<NumassBlock>) : ParentBlock {
+public open class MetaBlock(protected val blocks: List<NumassBlock>) : ParentBlock {
 
     override fun flowBlocks(): Flow<NumassBlock> = blocks.asFlow()
 
@@ -27,7 +28,7 @@ public class MetaBlock(private val blocks: List<NumassBlock>) : ParentBlock {
         get() = blocks.first().startTime
 
     override suspend fun getLength(): Duration =
-        Duration.nanoseconds(blocks.sumOf { it.getLength().toDouble(DurationUnit.NANOSECONDS) })
+        blocks.sumOf { it.getLength().toDouble(DurationUnit.NANOSECONDS) }.nanoseconds
 
     override val events: Flow<NumassEvent>
         get() = flow {
@@ -37,5 +38,8 @@ public class MetaBlock(private val blocks: List<NumassBlock>) : ParentBlock {
     override val frames: Flow<NumassFrame>
         get() = blocks.sortedBy { it.startTime }.asFlow().flatMapConcat { it.frames }
 
-
+    override val eventsCount: Long
+        get() = blocks.sumOf { it.eventsCount }
+    override val framesCount: Long
+        get() = blocks.sumOf { it.framesCount }
 }

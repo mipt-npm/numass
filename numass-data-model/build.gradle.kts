@@ -1,11 +1,8 @@
 plugins {
-    kotlin("multiplatform")
-    id("ru.mipt.npm.gradle.common")
+    id("ru.mipt.npm.gradle.mpp")
+    `maven-publish`
 }
 
-kscience {
-    publish()
-}
 
 val dataforgeVersion: String by rootProject.extra
 
