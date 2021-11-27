@@ -10,6 +10,8 @@ import space.kscience.dataforge.meta.Meta
 import space.kscience.dataforge.meta.get
 import space.kscience.dataforge.meta.long
 import space.kscience.dataforge.names.Name
+import space.kscience.dataforge.names.NameToken
+import space.kscience.dataforge.names.asName
 import space.kscience.dataforge.provider.Provider
 
 /**
@@ -39,14 +41,15 @@ public interface NumassSet : Iterable<NumassPoint>, Provider {
     override val defaultTarget: String get() = NUMASS_POINT_TARGET
 
     override fun content(target: String): Map<Name, Any> = if (target == NUMASS_POINT_TARGET) {
-        points.associateBy { Name.parse("point[${it.voltage}]") }
+        points.associateBy { NameToken("point", it.voltage.toString()).asName() }
     } else {
         super.content(target)
     }
 
     public companion object {
         //public const val DESCRIPTION_KEY = "info"
-        public const val NUMASS_POINT_TARGET: String = "point"
+        public const val NUMASS_POINT_TARGET: String = "numass.point"
+        public const val NUMASS_HV_TARGET: String = "numass.hv"
     }
 }
 

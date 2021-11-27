@@ -1,30 +1,16 @@
-pluginManagement {
+enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
+enableFeaturePreview("VERSION_CATALOGS")
+
+dependencyResolutionManagement {
     repositories {
+        mavenLocal()
         maven("https://repo.kotlin.link")
         mavenCentral()
-        gradlePluginPortal()
-        mavenLocal()
     }
 
-    val toolsVersion = "0.10.7"
-    val kotlinVersion = "1.6.0"
-
-    plugins {
-        id("ru.mipt.npm.gradle.project") version toolsVersion
-        id("ru.mipt.npm.gradle.mpp") version toolsVersion
-        id("ru.mipt.npm.gradle.jvm") version toolsVersion
-        id("ru.mipt.npm.gradle.js") version toolsVersion
-        kotlin("jvm") version kotlinVersion
-        kotlin("js") version kotlinVersion
-    }
-
-    resolutionStrategy {
-        eachPlugin {
-            if (requested.id.id == "com.squareup.wire") {
-                // For some reason, Gradle does a lookup on the wrong coordinates:
-                // 'com.squareup.wire:com.squareup.wire.gradle.plugin' instead of the one below.
-                useModule("com.squareup.wire:wire-gradle-plugin:${requested.version}")
-            }
+    versionCatalogs {
+        create("npm") {
+            from("ru.mipt.npm:version-catalog:0.10.8-kotlin-1.6.0")
         }
     }
 }
@@ -33,6 +19,7 @@ include(
     ":numass-data-model",
     ":numass-analysis",
     ":numass-data-proto",
+    //":numass-data-server",
     ":numass-workspace",
     ":numass-model"
 )

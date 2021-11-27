@@ -1,7 +1,7 @@
 plugins {
     kotlin("jvm")
     id("ru.mipt.npm.gradle.common")
-    id("com.squareup.wire") version "3.5.0"
+    id("com.squareup.wire")
     `maven-publish`
 }
 

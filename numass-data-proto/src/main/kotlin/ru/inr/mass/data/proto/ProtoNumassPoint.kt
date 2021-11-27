@@ -41,7 +41,7 @@ import kotlin.time.Duration.Companion.nanoseconds
  */
 internal class ProtoNumassPoint(
     override val meta: Meta,
-    private val protoBuilder: () -> Point,
+    protoBuilder: () -> Point,
 ) : NumassPoint {
 
     val point: Point by lazy(protoBuilder)
@@ -80,7 +80,7 @@ internal class ProtoNumassPoint(
     override val framesCount: Long
         get() = point.channels.sumOf { channel ->
             channel.blocks.sumOf { block ->
-                block.frames.size ?: 0
+                block.frames.size
             }.toLong()
         }
 

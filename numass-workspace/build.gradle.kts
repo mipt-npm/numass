@@ -1,7 +1,6 @@
 plugins {
     kotlin("jvm")
     id("ru.mipt.npm.gradle.common")
-    id("com.github.johnrengelman.shadow") version "6.1.0"
     `maven-publish`
 }
 
@@ -10,7 +9,7 @@ kotlin {
 }
 
 val dataforgeVersion: String by rootProject.extra
-val plotlyVersion: String by rootProject.extra("0.4.0")
+val plotlyVersion: String by rootProject.extra
 val kmathVersion: String by rootProject.extra
 
 dependencies {

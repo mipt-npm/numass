@@ -3,7 +3,7 @@ plugins {
 }
 
 allprojects {
-    repositories{
+    repositories {
         mavenLocal()
         maven("https://repo.kotlin.link")
     }
@@ -12,8 +12,9 @@ allprojects {
     version = "0.1.0-dev-1"
 }
 
-val dataforgeVersion by extra("0.5.2-dev-2")
-val kmathVersion by extra("0.3.0-dev-15")
+val dataforgeVersion by extra("0.5.2-dev-4")
+val kmathVersion by extra("0.3.0-dev-17")
+val plotlyVersion: String by extra("0.5.0")
 
 ksciencePublish{
     git("https://mipt-npm.jetbrains.space/p/numass/code/numass/")

@@ -14,7 +14,7 @@ suspend fun main() {
         operator?.startsWith("Vas") ?: false
     }
 
-    filtered.flow().collect {
+    filtered.flowData().collect {
         println(it)
     }
 }

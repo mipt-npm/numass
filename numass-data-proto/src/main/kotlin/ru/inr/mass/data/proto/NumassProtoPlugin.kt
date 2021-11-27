@@ -14,12 +14,10 @@ public class NumassProtoPlugin : AbstractPlugin() {
     public val io: IOPlugin by require(IOPlugin)
     override val tag: PluginTag get() = Companion.tag
 
-    override fun content(target: String): Map<Name, Any> {
-        return if(target== EnvelopeFormatFactory.ENVELOPE_FORMAT_TYPE){
-            mapOf(TaggedNumassEnvelopeFormat.name to TaggedNumassEnvelopeFormat)
-        } else{
-            super.content(target)
-        }
+    override fun content(target: String): Map<Name, Any> = if(target == EnvelopeFormatFactory.ENVELOPE_FORMAT_TYPE){
+        mapOf(TaggedNumassEnvelopeFormat.name to TaggedNumassEnvelopeFormat)
+    } else{
+        super.content(target)
     }
 
     public companion object : PluginFactory<NumassProtoPlugin> {

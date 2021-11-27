@@ -3,7 +3,7 @@ package ru.inr.mass.workspace
 import kotlinx.html.h1
 import kotlinx.html.h2
 import ru.inr.mass.data.api.NumassPoint
-import ru.inr.mass.data.proto.HVEntry
+import ru.inr.mass.data.proto.HVData
 import ru.inr.mass.data.proto.NumassDirectorySet
 import space.kscience.dataforge.values.asValue
 import space.kscience.dataforge.values.double
@@ -42,7 +42,7 @@ fun Plot.amplitudeSpectrum(
 /**
  * Generate a plot from hv data
  */
-fun Plot.hvData(data: List<HVEntry>): Trace = scatter {
+fun Plot.hvData(data: HVData): Trace = scatter {
     x.strings = data.map { it.timestamp.toString() }
     y.numbers = data.map { it.value }
 }

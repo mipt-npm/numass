@@ -112,7 +112,7 @@ internal class TaggedNumassEnvelopeFormat(private val io: IOPlugin) : EnvelopeFo
         override fun invoke(meta: Meta, context: Context): EnvelopeFormat {
             val io = context.io
 
-            val metaFormatName = meta["name"].string?.let(Name::parse) ?: JsonMetaFormat.name
+            val metaFormatName = meta["name"].string?.let { Name.parse(it) } ?: JsonMetaFormat.name
             //Check if appropriate factory exists
             io.metaFormatFactories.find { it.name == metaFormatName } ?: error("Meta format could not be resolved")
 
@@ -133,19 +133,17 @@ internal class TaggedNumassEnvelopeFormat(private val io: IOPlugin) : EnvelopeFo
             return Tag(metaFormatKey, metaLength, dataLength)
         }
 
-        override fun peekFormat(io: IOPlugin, binary: Binary): EnvelopeFormat? {
-            return try {
-                binary.read {
-                    val header = readRawString(30)
-                    if (header.startsWith(START_SEQUENCE) && header.endsWith(END_SEQUENCE)) {
-                        TaggedNumassEnvelopeFormat(io)
-                    } else {
-                        null
-                    }
+        override fun peekFormat(io: IOPlugin, binary: Binary): EnvelopeFormat? = try {
+            binary.read {
+                val header = readRawString(30)
+                if (header.startsWith(START_SEQUENCE) && header.endsWith(END_SEQUENCE)) {
+                    TaggedNumassEnvelopeFormat(io)
+                } else {
+                    null
                 }
-            } catch (ex: Exception) {
-                null
             }
+        } catch (ex: Exception) {
+            null
         }
 
         private val default by lazy { invoke() }

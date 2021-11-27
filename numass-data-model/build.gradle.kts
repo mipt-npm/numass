@@ -1,5 +1,6 @@
 plugins {
-    id("ru.mipt.npm.gradle.mpp")
+    kotlin("multiplatform")
+    id("ru.mipt.npm.gradle.common")
     `maven-publish`
 }
 
@@ -11,7 +12,7 @@ kotlin.sourceSets {
         dependencies {
             api("space.kscience:dataforge-context:$dataforgeVersion")
             api("space.kscience:dataforge-data:$dataforgeVersion")
-            api("org.jetbrains.kotlinx:kotlinx-datetime:0.1.1")
+            api("org.jetbrains.kotlinx:kotlinx-datetime:${ru.mipt.npm.gradle.KScienceVersions.dateTimeVersion}")
         }
     }
     jvmMain{
@@ -19,6 +20,10 @@ kotlin.sourceSets {
             api("ch.qos.logback:logback-classic:1.2.3")
         }
     }
+}
+
+kscience{
+    useSerialization()
 }
 
 
