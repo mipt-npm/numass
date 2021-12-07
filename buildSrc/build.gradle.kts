@@ -11,5 +11,5 @@ repositories {
 
 dependencies {
     api("com.squareup.wire:wire-gradle-plugin:3.7.1")
-    api("ru.mipt.npm:gradle-tools:0.10.8-kotlin-1.6.0")
+    api("ru.mipt.npm:gradle-tools:0.10.7")
 }

@@ -12,7 +12,7 @@ allprojects {
     version = "0.1.0-dev-1"
 }
 
-val dataforgeVersion by extra("0.5.2-dev-4")
+val dataforgeVersion by extra("0.5.2")
 val kmathVersion by extra("0.3.0-dev-17")
 val plotlyVersion: String by extra("0.5.0")
 

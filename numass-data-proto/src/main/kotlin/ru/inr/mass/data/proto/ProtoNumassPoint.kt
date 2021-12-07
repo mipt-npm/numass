@@ -30,6 +30,7 @@ import space.kscience.dataforge.meta.*
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
+import java.nio.ByteOrder
 import java.util.zip.Inflater
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -46,11 +47,19 @@ internal class ProtoNumassPoint(
 
     val point: Point by lazy(protoBuilder)
 
-    override fun flowBlocks() = point.channels.flatMap { channel ->
-        channel.blocks
-            .map { block -> ProtoNumassBlock(channel.id.toInt(), block, this) }
-            .sortedBy { it.startTime }
-    }.asFlow()
+    override fun flowBlocks(): Flow<ProtoNumassBlock> {
+        val frameByteOrder = if (meta["tqdc"] != null) {
+            ByteOrder.LITTLE_ENDIAN
+        } else {
+            ByteOrder.BIG_ENDIAN
+        }
+
+        return point.channels.flatMap { channel ->
+            channel.blocks
+                .map { block -> ProtoNumassBlock(channel.id.toInt(), block, this, frameByteOrder) }
+                .sortedBy { it.startTime }
+        }.asFlow()
+    }
 
     override suspend fun getChannels(): Map<Int, NumassBlock> =
         point.channels.groupBy { it.id.toInt() }.mapValues { entry ->
@@ -120,10 +129,12 @@ internal class ProtoNumassPoint(
         }
 
         public fun fromEnvelope(envelope: Envelope): ProtoNumassPoint? {
-            val proto = envelope.useData {
-                Point.ADAPTER.decode(it)
+            if (envelope.data == null) return null
+            return ProtoNumassPoint(envelope.meta) {
+                envelope.useData {
+                    Point.ADAPTER.decode(it)
+                } ?: error("Data is empty")
             }
-            return proto?.let { ProtoNumassPoint(envelope.meta) { it } }
         }
     }
 }
@@ -133,6 +144,7 @@ public class ProtoNumassBlock(
     override val channel: Int,
     private val block: Point.Channel.Block,
     private val parent: NumassPoint? = null,
+    private val frameByteOrder: ByteOrder = ByteOrder.BIG_ENDIAN,
 ) : NumassBlock {
 
     override val startTime: Instant
@@ -176,7 +188,9 @@ public class ProtoNumassBlock(
         }
 
     private fun ByteString.toShortArray(): ShortArray {
-        val shortBuffer = asByteBuffer().asShortBuffer()
+        val shortBuffer = asByteBuffer().apply {
+            order(frameByteOrder)
+        }.asShortBuffer()
         return if (shortBuffer.hasArray()) {
             shortBuffer.array()
         } else {

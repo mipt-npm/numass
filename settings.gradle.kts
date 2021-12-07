@@ -10,7 +10,7 @@ dependencyResolutionManagement {
 
     versionCatalogs {
         create("npm") {
-            from("ru.mipt.npm:version-catalog:0.10.8-kotlin-1.6.0")
+            from("ru.mipt.npm:version-catalog:0.10.7")
         }
     }
 }
