@@ -29,10 +29,10 @@ import ru.inr.mass.data.api.NumassPoint.Companion.LENGTH_KEY
 import space.kscience.dataforge.meta.*
 import space.kscience.dataforge.meta.descriptors.Described
 import space.kscience.dataforge.names.asName
-import space.kscience.dataforge.tables.*
 import space.kscience.dataforge.values.*
 import space.kscience.kmath.histogram.Counter
 import space.kscience.kmath.histogram.LongCounter
+import space.kscience.tables.*
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow

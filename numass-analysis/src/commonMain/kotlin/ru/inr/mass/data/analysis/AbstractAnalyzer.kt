@@ -24,9 +24,9 @@ import ru.inr.mass.data.api.SignalProcessor
 import space.kscience.dataforge.meta.Meta
 import space.kscience.dataforge.meta.get
 import space.kscience.dataforge.meta.int
-import space.kscience.dataforge.tables.RowTable
-import space.kscience.dataforge.tables.Table
 import space.kscience.dataforge.values.Value
+import space.kscience.tables.RowTable
+import space.kscience.tables.Table
 
 /**
  * Created by darksnake on 11.07.2017.

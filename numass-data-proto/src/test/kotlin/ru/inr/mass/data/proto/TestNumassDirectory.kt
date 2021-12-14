@@ -10,6 +10,7 @@ import space.kscience.dataforge.meta.get
 import space.kscience.dataforge.meta.string
 import space.kscience.dataforge.values.ListValue
 import java.nio.file.Path
+import kotlin.test.Ignore
 import kotlin.test.assertEquals
 
 class TestNumassDirectory {
@@ -30,6 +31,7 @@ class TestNumassDirectory {
     }
 
     @Test
+    @Ignore
     fun testTQDCRead() = runBlocking {
         val pointPath = Path.of("C:\\Users\\altavir\\Desktop\\p20211122173034(20s).dat")
         val point: NumassPoint = context.readNumassPointFile(pointPath)!!

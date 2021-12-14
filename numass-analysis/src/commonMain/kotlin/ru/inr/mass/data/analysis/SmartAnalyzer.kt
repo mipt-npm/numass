@@ -26,10 +26,10 @@ import space.kscience.dataforge.meta.Meta
 import space.kscience.dataforge.meta.descriptors.MetaDescriptor
 import space.kscience.dataforge.meta.get
 import space.kscience.dataforge.meta.string
-import space.kscience.dataforge.tables.Table
 import space.kscience.dataforge.values.Value
 import space.kscience.dataforge.values.asValue
 import space.kscience.dataforge.values.setValue
+import space.kscience.tables.Table
 
 /**
  * An analyzer dispatcher which uses different analyzer for different meta
