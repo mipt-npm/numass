@@ -15,286 +15,161 @@
 // */
 //
 package ru.inr.mass.data.analysis
-//
-//import hep.dataforge.description.ValueDef
-//import hep.dataforge.description.ValueDefs
-//import hep.dataforge.meta.Meta
-//import hep.dataforge.tables.Adapters.*
-//import hep.dataforge.tables.TableFormat
-//import hep.dataforge.tables.TableFormatBuilder
-//import hep.dataforge.values.*
-//import ru.inr.mass.data.analysis.NumassAnalyzer.Companion.COUNT_KEY
-//import ru.inr.mass.data.analysis.NumassAnalyzer.Companion.COUNT_RATE_ERROR_KEY
-//import ru.inr.mass.data.analysis.NumassAnalyzer.Companion.COUNT_RATE_KEY
-//import ru.inr.mass.data.analysis.NumassAnalyzer.Companion.LENGTH_KEY
-//import ru.inr.mass.data.analysis.TimeAnalyzer.AveragingMethod.*
-//import inr.numass.data.api.*
-//import inr.numass.data.api.NumassPoint.Companion.HV_KEY
-//import ru.inr.mass.data.api.NumassBlock
-//import ru.inr.mass.data.api.SignalProcessor
-//import space.kscience.dataforge.values.ValueType
-//import java.util.*
-//import java.util.concurrent.atomic.AtomicLong
-//import kotlin.collections.List
-//import kotlin.collections.asSequence
-//import kotlin.collections.count
-//import kotlin.collections.first
-//import kotlin.collections.map
-//import kotlin.collections.set
-//import kotlin.collections.sortBy
-//import kotlin.collections.sumBy
-//import kotlin.collections.sumByDouble
-//import kotlin.collections.toMutableList
-//import kotlin.math.*
-//import kotlin.streams.asSequence
-//
-//
-///**
-// * An analyzer which uses time information from events
-// * Created by darksnake on 11.07.2017.
-// */
-//@ValueDefs(
-//    ValueDef(
-//        key = "separateParallelBlocks",
-//        type = [ValueType.BOOLEAN],
-//        info = "If true, then parallel blocks will be forced to be evaluated separately"
-//    ),
-//    ValueDef(
-//        key = "chunkSize",
-//        type = [ValueType.NUMBER],
-//        def = "-1",
-//        info = "The number of events in chunk to split the chain into. If negative, no chunks are used"
-//    )
-//)
-//open class TimeAnalyzer(processor: SignalProcessor? = null) : AbstractAnalyzer(processor) {
-//
-//    override fun analyze(block: NumassBlock, config: Meta): Values {
-//        //In case points inside points
-//        if (block is ParentBlock && (block.isSequential || config.getBoolean("separateParallelBlocks", false))) {
-//            return analyzeParent(block, config)
-//        }
-//
-//        val t0 = getT0(block, config).toLong()
-//
-//        val chunkSize = config.getInt("chunkSize", -1)
-//
-//        val count = super.getEvents(block, config).count()
-//        val length = block.length.toNanos().toDouble() / 1e9
-//
-//        val res = when {
-//            count < 1000 -> ValueMap.ofPairs(
-//                LENGTH_KEY to length,
-//                COUNT_KEY to count,
-//                COUNT_RATE_KEY to count.toDouble() / length,
-//                COUNT_RATE_ERROR_KEY to sqrt(count.toDouble()) / length
-//            )
-//            chunkSize > 0 -> getEventsWithDelay(block, config)
-//                .chunked(chunkSize) { analyzeSequence(it.asSequence(), t0) }
-//                .toList()
-//                .mean(config.getEnum("mean", WEIGHTED))
-//            else -> analyzeSequence(getEventsWithDelay(block, config), t0)
-//        }
-//
-//        return ValueMap.Builder(res)
-//            .putValue("blockLength", length)
-//            .putValue(NumassAnalyzer.WINDOW_KEY, config.getRange())
-//            .putValue(NumassAnalyzer.TIME_KEY, block.startTime)
-//            .putValue(T0_KEY, t0.toDouble() / 1000.0)
-//            .build()
-//    }
-//
-//
-//    private fun analyzeSequence(sequence: Sequence<Pair<NumassEvent, Long>>, t0: Long): Values {
-//        val totalN = AtomicLong(0)
-//        val totalT = AtomicLong(0)
-//        sequence.filter { pair -> pair.second >= t0 }
-//            .forEach { pair ->
-//                totalN.incrementAndGet()
-//                //TODO add progress listener here
-//                totalT.addAndGet(pair.second)
-//            }
-//
-//        if (totalN.toInt() == 0) {
-//            error("Zero number of intervals")
-//        }
-//
-//        val countRate =
-//            1e6 * totalN.get() / (totalT.get() / 1000 - t0 * totalN.get() / 1000)//1e9 / (totalT.get() / totalN.get() - t0);
-//        val countRateError = countRate / sqrt(totalN.get().toDouble())
-//        val length = totalT.get() / 1e9
-//        val count = (length * countRate).toLong()
-//
-//        return ValueMap.ofPairs(
-//            LENGTH_KEY to length,
-//            COUNT_KEY to count,
-//            COUNT_RATE_KEY to countRate,
-//            COUNT_RATE_ERROR_KEY to countRateError
-//        )
-//
-//    }
-//
-//    override fun analyzeParent(point: ParentBlock, config: Meta): Values {
-//        //Average count rates, do not sum events
-//        val res = point.blocks.map { it -> analyze(it, config) }
-//
-//        val map = HashMap(res.mean(config.getEnum("mean", WEIGHTED)).asMap())
-//        if (point is NumassPoint) {
-//            map[HV_KEY] = Value.of(point.voltage)
-//        }
-//        return ValueMap(map)
-//    }
-//
-//    enum class AveragingMethod {
-//        ARITHMETIC,
-//        WEIGHTED,
-//        GEOMETRIC
-//    }
-//
-//    /**
-//     * Combine multiple blocks from the same point into one
-//     *
-//     * @return
-//     */
-//    private fun List<Values>.mean(method: AveragingMethod): Values {
-//
-//        if (this.isEmpty()) {
-//            return ValueMap.Builder()
-//                .putValue(LENGTH_KEY, 0)
-//                .putValue(COUNT_KEY, 0)
-//                .putValue(COUNT_RATE_KEY, 0)
-//                .putValue(COUNT_RATE_ERROR_KEY, 0)
-//                .build()
-//        }
-//
-//        val totalTime = sumByDouble { it.getDouble(LENGTH_KEY) }
-//
-//        val (countRate, countRateDispersion) = when (method) {
-//            ARITHMETIC -> Pair(
-//                sumByDouble { it.getDouble(COUNT_RATE_KEY) } / size,
-//                sumByDouble { it.getDouble(COUNT_RATE_ERROR_KEY).pow(2.0) } / size / size
-//            )
-//            WEIGHTED -> Pair(
-//                sumByDouble { it.getDouble(COUNT_RATE_KEY) * it.getDouble(LENGTH_KEY) } / totalTime,
-//                sumByDouble { (it.getDouble(COUNT_RATE_ERROR_KEY) * it.getDouble(LENGTH_KEY) / totalTime).pow(2.0) }
-//            )
-//            GEOMETRIC -> {
-//                val mean = exp(sumByDouble { ln(it.getDouble(COUNT_RATE_KEY)) } / size)
-//                val variance = (mean / size).pow(2.0) * sumByDouble {
-//                    (it.getDouble(COUNT_RATE_ERROR_KEY) / it.getDouble(
-//                        COUNT_RATE_KEY
-//                    )).pow(2.0)
-//                }
-//                Pair(mean, variance)
-//            }
-//        }
-//
-//        return ValueMap.Builder(first())
-//            .putValue(LENGTH_KEY, totalTime)
-//            .putValue(COUNT_KEY, sumBy { it.getInt(COUNT_KEY) })
-//            .putValue(COUNT_RATE_KEY, countRate)
-//            .putValue(COUNT_RATE_ERROR_KEY, sqrt(countRateDispersion))
-//            .build()
-//    }
-//
-//    @ValueDefs(
-//        ValueDef(key = "t0", type = arrayOf(ValueType.NUMBER), info = "Constant t0 cut"),
-//        ValueDef(
-//            key = "t0.crFraction",
-//            type = arrayOf(ValueType.NUMBER),
-//            info = "The relative fraction of events that should be removed by time cut"
-//        ),
-//        ValueDef(key = "t0.min", type = arrayOf(ValueType.NUMBER), def = "0", info = "Minimal t0")
-//    )
-//    protected fun getT0(block: NumassBlock, meta: Meta): Int {
-//        return if (meta.hasValue("t0")) {
-//            meta.getInt("t0")
-//        } else if (meta.hasMeta("t0")) {
-//            val fraction = meta.getDouble("t0.crFraction")
-//            val cr = estimateCountRate(block)
-//            if (cr < meta.getDouble("t0.minCR", 0.0)) {
-//                0
-//            } else {
-//                max(-1e9 / cr * ln(1.0 - fraction), meta.getDouble("t0.min", 0.0)).toInt()
-//            }
-//        } else {
-//            0
-//        }
-//
-//    }
-//
-//    private fun estimateCountRate(block: NumassBlock): Double {
-//        return block.events.count().toDouble() / block.length.toMillis() * 1000
-//    }
-//
-//    fun zipEvents(block: NumassBlock, config: Meta): Sequence<Pair<NumassEvent, NumassEvent>> {
-//        return getAllEvents(block).asSequence().zipWithNext()
-//    }
-//
-//    /**
-//     * The chain of event with delays in nanos
-//     *
-//     * @param block
-//     * @param config
-//     * @return
-//     */
-//    fun getEventsWithDelay(block: NumassBlock, config: Meta): Sequence<Pair<NumassEvent, Long>> {
-//        val inverted = config.getBoolean("inverted", true)
-//        //range is included in super.getEvents
-//        val events = super.getEvents(block, config).toMutableList()
-//
-//        if (config.getBoolean("sortEvents", false) || (block is ParentBlock && !block.isSequential)) {
-//            //sort in place if needed
-//            events.sortBy { it.timeOffset }
-//        }
-//
-//        return events.asSequence().zipWithNext { prev, next ->
-//            val delay = max(next.timeOffset - prev.timeOffset, 0)
-//            if (inverted) {
-//                Pair(next, delay)
-//            } else {
-//                Pair(prev, delay)
-//            }
-//        }
-//    }
-//
-//    /**
-//     * The filtered stream of events
-//     *
-//     * @param block
-//     * @param meta
-//     * @return
-//     */
-//    override fun getEvents(block: NumassBlock, meta: Meta): List<NumassEvent> {
-//        val t0 = getT0(block, meta).toLong()
-//        return getEventsWithDelay(block, meta)
-//            .filter { pair -> pair.second >= t0 }
-//            .map { it.first }.toList()
-//    }
-//
-//    public override fun getTableFormat(config: Meta): TableFormat {
-//        return TableFormatBuilder()
-//            .addNumber(HV_KEY, X_VALUE_KEY)
-//            .addNumber(LENGTH_KEY)
-//            .addNumber(COUNT_KEY)
-//            .addNumber(COUNT_RATE_KEY, Y_VALUE_KEY)
-//            .addNumber(COUNT_RATE_ERROR_KEY, Y_ERROR_KEY)
-//            .addColumn(NumassAnalyzer.WINDOW_KEY)
-//            .addTime()
-//            .addNumber(T0_KEY)
-//            .build()
-//    }
-//
-//    companion object {
-//        const val T0_KEY = "t0"
-//
-//        val NAME_LIST = arrayOf(
-//            LENGTH_KEY,
-//            COUNT_KEY,
-//            COUNT_RATE_KEY,
-//            COUNT_RATE_ERROR_KEY,
-//            NumassAnalyzer.WINDOW_KEY,
-//            NumassAnalyzer.TIME_KEY,
-//            T0_KEY
-//        )
-//    }
-//}
+
+import kotlinx.coroutines.flow.*
+import ru.inr.mass.data.analysis.TimeAnalyzerParameters.AveragingMethod
+import ru.inr.mass.data.api.NumassBlock
+import ru.inr.mass.data.api.NumassEvent
+import ru.inr.mass.data.api.ParentBlock
+import space.kscience.kmath.streaming.asFlow
+import space.kscience.kmath.streaming.chunked
+import space.kscience.kmath.structures.Buffer
+import kotlin.math.*
+
+
+/**
+ * An analyzer which uses time information from events
+ * Created by darksnake on 11.07.2017.
+ */
+public open class TimeAnalyzer(override val extractor: NumassEventExtractor) : NumassAnalyzer() {
+
+    override suspend fun analyzeInternal(
+        block: NumassBlock,
+        parameters: NumassAnalyzerParameters,
+    ): NumassAnalyzerResult {
+        //Parallel processing and merging of parent blocks
+        if (block is ParentBlock) {
+            val res = block.flowBlocks().map { analyzeInternal(it, parameters) }.toList()
+            return res.combineResults(parameters.t0.averagingMethod)
+        }
+
+        val t0 = getT0(block, parameters.t0).toLong()
+
+        return when (val chunkSize = parameters.t0.chunkSize) {
+            null -> block.flowFilteredEvents(parameters)
+                .byPairs(parameters.t0.inverted)
+                .analyze(t0)
+            //            // chunk is larger than a number of event
+            //            chunkSize > count -> NumassAnalyzerResult {
+            //                this.length = length
+            //                this.count = count
+            //                this.countRate = count.toDouble() / length
+            //                this.countRateError = sqrt(count.toDouble()) / length
+            //            }
+            else -> block.flowFilteredEvents(parameters)
+                .byPairs(parameters.t0.inverted)
+                .chunked(chunkSize, Buffer.Companion::auto)
+                .map { it.asFlow().analyze(t0) }
+                .toList()
+                .combineResults(parameters.t0.averagingMethod)
+        }
+
+    }
+
+
+    /**
+     * Analyze given flow of events + delays
+     */
+    private suspend fun Flow<Pair<NumassEvent, Long>>.analyze(t0: Long): NumassAnalyzerResult {
+        var totalN = 0L
+        var totalT = 0L
+        filter { pair -> pair.second >= t0 }.collect { pair ->
+            totalN++
+            //TODO add progress listener here
+            totalT+= pair.second
+        }
+
+        if (totalN == 0L) {
+            error("Zero number of intervals")
+        }
+
+        val countRate = 1e6 * totalN / (totalT / 1000 - t0 * totalN / 1000)
+        val countRateError = countRate / sqrt(totalN.toDouble())
+        val length = totalT / 1e9
+        val count = (length * countRate).toLong()
+
+        return NumassAnalyzerResult {
+            this.length = totalT / 1e9
+            this.count = count
+            this.countRate = countRate
+            this.countRateError = countRateError
+        }
+    }
+
+    /**
+     * Combine multiple blocks from the same point into one
+     *
+     * @return
+     */
+    private fun List<NumassAnalyzerResult>.combineResults(method: AveragingMethod): NumassAnalyzerResult {
+
+        if (this.isEmpty()) {
+            return NumassAnalyzerResult.empty()
+        }
+
+        val totalTime = sumOf { it.length }
+
+        val (countRate, countRateDispersion) = when (method) {
+            AveragingMethod.ARITHMETIC -> Pair(
+                sumOf { it.countRate } / size,
+                sumOf { it.countRateError.pow(2.0) } / size / size
+            )
+            AveragingMethod.WEIGHTED -> Pair(
+                sumOf { it.countRate * it.length } / totalTime,
+                sumOf { (it.countRateError * it.length / totalTime).pow(2.0) }
+            )
+            AveragingMethod.GEOMETRIC -> {
+                val mean = exp(sumOf { ln(it.countRate) } / size)
+                val variance = (mean / size).pow(2.0) * sumOf {
+                    (it.countRateError / it.countRate).pow(2.0)
+                }
+                Pair(mean, variance)
+            }
+        }
+
+        return NumassAnalyzerResult {
+            length = totalTime
+            count = sumOf { it.count }
+            this.countRate = countRate
+            this.countRateError = sqrt(countRateDispersion)
+        }
+    }
+
+    /**
+     * Compute actual t0
+     */
+    private suspend fun getT0(block: NumassBlock, parameters: TimeAnalyzerParameters): Int {
+        parameters.value?.let { return it }
+        parameters.crFraction?.let { fraction ->
+            val cr = block.events.count().toDouble() / block.getLength().inWholeMilliseconds * 1000
+            if (cr < parameters.crMin) {
+                0
+            } else {
+                max(-1e9 / cr * ln(1.0 - fraction), parameters.min).toInt()
+            }
+        }
+        return 0
+    }
+
+    /**
+     * Add a delay after (inverted = false) or before (inverted = true) event to each event
+     */
+    private suspend fun Flow<NumassEvent>.byPairs(inverted: Boolean = true): Flow<Pair<NumassEvent, Long>> = flow {
+        var prev: NumassEvent?
+        var next: NumassEvent?
+        collect { value ->
+            next = value
+            prev = next
+            if (prev != null && next != null) {
+                val delay = next!!.timeOffset - prev!!.timeOffset
+                if (delay < 0) error("Events are not ordered!")
+                if (inverted) {
+                    emit(Pair(next!!, delay))
+                } else {
+                    emit(Pair(prev!!, delay))
+                }
+            }
+        }
+    }
+
+}

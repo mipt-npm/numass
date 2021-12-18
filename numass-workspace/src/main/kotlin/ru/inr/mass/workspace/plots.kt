@@ -1,8 +1,13 @@
 package ru.inr.mass.workspace
 
+import kotlinx.coroutines.runBlocking
 import kotlinx.html.h1
 import kotlinx.html.h2
-import ru.inr.mass.data.api.NumassPoint
+import ru.inr.mass.data.analysis.NumassAmplitudeSpectrum
+import ru.inr.mass.data.analysis.NumassEventExtractor
+import ru.inr.mass.data.analysis.amplitudeSpectrum
+import ru.inr.mass.data.analysis.timeHistogram
+import ru.inr.mass.data.api.NumassSet
 import ru.inr.mass.data.proto.HVData
 import ru.inr.mass.data.proto.NumassDirectorySet
 import space.kscience.dataforge.values.asValue
@@ -14,29 +19,29 @@ import space.kscience.kmath.operations.asIterable
 import space.kscience.kmath.structures.Buffer
 import space.kscience.kmath.structures.DoubleBuffer
 import space.kscience.plotly.*
-import space.kscience.plotly.models.Scatter
-import space.kscience.plotly.models.Trace
-import space.kscience.plotly.models.TraceValues
+import space.kscience.plotly.models.*
 
 /**
  * Plot a kmath histogram
  */
 @OptIn(UnstableKMathAPI::class)
-fun Plot.histogram(histogram: UnivariateHistogram, block: Scatter.() -> Unit): Trace = scatter {
+fun Plot.histogram(histogram: UnivariateHistogram, block: Scatter.() -> Unit = {}): Trace = scatter {
     x.numbers = histogram.bins.map { it.domain.center }
     y.numbers = histogram.bins.map { it.value }
+    line.shape = LineShape.hv
     block()
 }
 
-fun Plot.amplitudeSpectrum(
-    point: NumassPoint,
-    binSize: Int = 20,
-    range: IntRange = 0..2000,
-    name: String = point.toString(),
+fun Plot.histogram(
+    spectrum: NumassAmplitudeSpectrum,
+    binSize: UInt = 20U,
+    block: Scatter.() -> Unit = {},
 ): Trace = scatter {
-    histogram(point.spectrum().reShape(binSize, range)) {
-        this.name = name
-    }
+    val binned = spectrum.binned(binSize)
+    x.numbers = binned.keys.map { (it.first + it.last).toDouble() / 2.0 }
+    y.numbers = binned.values
+    line.shape = LineShape.hv
+    block()
 }
 
 /**
@@ -47,26 +52,44 @@ fun Plot.hvData(data: HVData): Trace = scatter {
     y.numbers = data.map { it.value }
 }
 
-fun Plotly.numassDirectory(set: NumassDirectorySet, binSize: Int = 20, range: IntRange = 0..2000): PlotlyPage =
+fun Plotly.numassSet(
+    set: NumassSet,
+    amplitudeBinSize: UInt = 20U,
+    eventExtractor: NumassEventExtractor = NumassEventExtractor.EVENTS_ONLY,
+): PlotlyPage =
     Plotly.page {
         h1 {
-            +"Numass point set ${set.path}"
+            +"Numass point set ${ShapeType.path}"
         }
         h2 {
             +"Amplitude spectrum"
         }
         plot {
-            set.points.sortedBy { it.index }.forEach {
-                amplitudeSpectrum(it, binSize, range)
+            runBlocking {
+                set.points.sortedBy { it.index }.forEach {
+                    histogram(it.amplitudeSpectrum(eventExtractor), amplitudeBinSize)
+                }
             }
         }
 
-        set.getHvData()?.let { entries ->
-            h2 {
-                +"HV"
+        h2 {
+            +"Time spectra"
+        }
+        plot {
+            set.points.sortedBy { it.index }.forEach {
+                histogram(it.timeHistogram(1e3))
             }
-            plot {
-                hvData(entries)
+            layout.yaxis.type = AxisType.log
+
+        }
+        if (set is NumassDirectorySet) {
+            set.getHvData()?.let { entries ->
+                h2 {
+                    +"HV"
+                }
+                plot {
+                    hvData(entries)
+                }
             }
         }
     }

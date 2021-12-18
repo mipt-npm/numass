@@ -12,14 +12,18 @@ val tablesVersion: String by rootProject.extra
 kotlin.sourceSets {
     commonMain {
         dependencies {
-            api(project(":numass-data-model"))
+            api(projects.numass.numassDataModel)
             api("space.kscience:dataforge-io:$dataforgeVersion")
             api("space.kscience:tables-kt:$tablesVersion")
+            api("space.kscience:kmath-histograms:$kmathVersion")
             api("space.kscience:kmath-complex:$kmathVersion")
             api("space.kscience:kmath-stat:$kmathVersion")
-            api("space.kscience:kmath-histograms:$kmathVersion")
         }
     }
+}
+
+kscience{
+    useAtomic()
 }
 
 

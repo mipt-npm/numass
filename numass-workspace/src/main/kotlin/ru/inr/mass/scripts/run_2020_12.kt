@@ -2,7 +2,7 @@ package ru.inr.mass.scripts
 
 import kotlinx.coroutines.flow.collect
 import ru.inr.mass.data.proto.NumassDirectorySet
-import ru.inr.mass.workspace.readNumassRepository
+import ru.inr.mass.workspace.Numass.readNumassRepository
 import space.kscience.dataforge.data.DataTree
 import space.kscience.dataforge.data.filter
 import space.kscience.dataforge.meta.string

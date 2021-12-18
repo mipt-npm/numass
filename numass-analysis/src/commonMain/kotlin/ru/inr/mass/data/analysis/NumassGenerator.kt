@@ -11,11 +11,12 @@ package ru.inr.mass.data.analysis
 //import ru.inr.mass.data.api.NumassBlock
 //import ru.inr.mass.data.api.OrphanNumassEvent
 //import ru.inr.mass.data.api.SimpleBlock
-//import space.kscience.dataforge.tables.Table
 //import space.kscience.kmath.chains.Chain
 //import space.kscience.kmath.chains.MarkovChain
 //import space.kscience.kmath.chains.StatefulChain
 //import space.kscience.kmath.stat.RandomGenerator
+//import space.kscience.tables.Table
+//import kotlin.math.ln
 //import kotlin.time.Duration.Companion.nanoseconds
 //
 //private fun RandomGenerator.nextExp(mean: Double): Double {

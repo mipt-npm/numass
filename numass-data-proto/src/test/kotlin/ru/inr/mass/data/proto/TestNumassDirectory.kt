@@ -3,14 +3,13 @@ package ru.inr.mass.data.proto
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
-import ru.inr.mass.data.api.NumassPoint
+import ru.inr.mass.data.api.NumassSet
 import ru.inr.mass.data.api.ParentBlock
 import space.kscience.dataforge.context.Context
 import space.kscience.dataforge.meta.get
 import space.kscience.dataforge.meta.string
 import space.kscience.dataforge.values.ListValue
 import java.nio.file.Path
-import kotlin.test.Ignore
 import kotlin.test.assertEquals
 
 class TestNumassDirectory {
@@ -31,10 +30,10 @@ class TestNumassDirectory {
     }
 
     @Test
-    @Ignore
     fun testTQDCRead() = runBlocking {
-        val pointPath = Path.of("C:\\Users\\altavir\\Desktop\\p20211122173034(20s).dat")
-        val point: NumassPoint = context.readNumassPointFile(pointPath)!!
+        val pointPath = Path.of("src/test/resources", "testData/tqdc")
+        val set: NumassSet = context.readNumassDirectory(pointPath)
+        val point = set.first { it.voltage == 16000.0 }
         point.getChannels().forEach { (channel, block) ->
             println("$channel: $block")
             if(block is ParentBlock){

@@ -13,11 +13,14 @@ val plotlyVersion: String by rootProject.extra
 val kmathVersion: String by rootProject.extra
 
 dependencies {
-    implementation(project(":numass-data-proto"))
-    implementation(project(":numass-model"))
-    implementation(project(":numass-analysis"))
+    implementation(projects.numassDataProto)
+    implementation(projects.numassModel)
+    implementation(projects.numassAnalysis)
     implementation("space.kscience:dataforge-workspace:$dataforgeVersion")
-    implementation("space.kscience:plotlykt-core:$plotlyVersion")
-    implementation("space.kscience:kmath-histograms:$kmathVersion")
-    implementation("space.kscience:kmath-for-real:$kmathVersion")
+    implementation("space.kscience:plotlykt-jupyter:$plotlyVersion")
+    implementation("space.kscience:kmath-jupyter:$kmathVersion")
+}
+
+kscience{
+    jupyterLibrary("ru.inr.mass.notebook.NumassJupyter")
 }

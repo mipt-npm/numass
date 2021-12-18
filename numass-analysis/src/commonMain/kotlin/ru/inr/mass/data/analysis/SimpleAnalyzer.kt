@@ -14,43 +14,29 @@
  *  limitations under the License.
  */
 
-package inr.numass.data.analyzers
+package ru.inr.mass.data.analysis
 
 import kotlinx.coroutines.flow.count
-import ru.inr.mass.data.analysis.AbstractAnalyzer
-import ru.inr.mass.data.analysis.NumassAnalyzerResult
 import ru.inr.mass.data.api.NumassBlock
-import ru.inr.mass.data.api.SignalProcessor
-import space.kscience.dataforge.meta.Meta
-import space.kscience.dataforge.meta.descriptors.MetaDescriptor
-import space.kscience.dataforge.meta.descriptors.value
-import space.kscience.dataforge.meta.double
-import space.kscience.dataforge.meta.get
-import space.kscience.dataforge.meta.int
-import space.kscience.dataforge.values.ValueType
 import kotlin.math.sqrt
 
 /**
  * A simple event counter
  * Created by darksnake on 07.07.2017.
  */
-public class SimpleAnalyzer(processor: SignalProcessor? = null) : AbstractAnalyzer(processor) {
+public class SimpleAnalyzer(
+    override val extractor: NumassEventExtractor = NumassEventExtractor.EVENTS_ONLY,
+) : NumassAnalyzer() {
 
-    override val descriptor: MetaDescriptor = MetaDescriptor {
-        value("deadTime", ValueType.NUMBER) {
-            info = "Dead time in nanoseconds for correction"
-            default(0.0)
-        }
-    }
+    override suspend fun analyzeInternal(
+        block: NumassBlock,
+        parameters: NumassAnalyzerParameters
+    ): NumassAnalyzerResult {
 
-    override suspend fun analyze(block: NumassBlock, config: Meta): NumassAnalyzerResult {
-        val loChannel = config["window.lo"]?.int ?: 0
-        val upChannel = config["window.up"]?.int ?: Int.MAX_VALUE
-
-        val count: Int = getEvents(block, config).count()
+        val count: Int = block.flowFilteredEvents(parameters).count()
         val length: Double = block.getLength().inWholeNanoseconds.toDouble() / 1e9
 
-        val deadTime = config["deadTime"]?.double ?: 0.0
+        val deadTime = parameters.deadTime
 
         val countRate = if (deadTime > 0) {
             val mu = count.toDouble() / length
@@ -61,11 +47,10 @@ public class SimpleAnalyzer(processor: SignalProcessor? = null) : AbstractAnalyz
         val countRateError = sqrt(count.toDouble()) / length
 
         return NumassAnalyzerResult {
-            this.length = length.toLong()
+            this.length = length
             this.count = count.toLong()
             this.countRate = countRate
             this.countRateError = countRateError
-            this.window = loChannel.toUInt().rangeTo(upChannel.toUInt())
             //TODO NumassAnalyzer.timestamp to block.startTime
         }
     }

@@ -1,13 +1,10 @@
 package ru.inr.mass.scripts
 
 import kotlinx.coroutines.flow.toList
-import kotlinx.html.code
 import kotlinx.html.h2
 import kotlinx.html.p
 import kotlinx.serialization.json.Json
-import ru.inr.mass.workspace.readNumassDirectory
-import space.kscience.dataforge.io.JsonMetaFormat
-import space.kscience.dataforge.io.toString
+import ru.inr.mass.workspace.Numass.readNumassDirectory
 import space.kscience.dataforge.meta.MetaSerializer
 import space.kscience.plotly.*
 
@@ -33,18 +30,18 @@ suspend fun main() {
         h2 { +"Analysis" }
         plot {
             histogram {
-                name="max"
-                x.numbers = frames.map { frame -> frame.signal.maxOf {  it.toUShort().toInt() - Short.MAX_VALUE } }
+                name = "max"
+                x.numbers = frames.map { frame -> frame.signal.maxOf { it.toUShort().toInt() - Short.MAX_VALUE } }
             }
 
             histogram {
-                name="max-min"
-                xbins{
+                name = "max-min"
+                xbins {
                     size = 2.0
                 }
                 x.numbers = frames.map { frame ->
-                    frame.signal.maxOf {  it.toUShort().toInt() - Short.MAX_VALUE } -
-                            frame.signal.minOf {  it.toUShort().toInt() - Short.MAX_VALUE }
+                    frame.signal.maxOf { it.toUShort().toInt() - Short.MAX_VALUE } -
+                            frame.signal.minOf { it.toUShort().toInt() - Short.MAX_VALUE }
                 }
             }
         }
