@@ -7,18 +7,18 @@ import ru.inr.mass.data.api.NumassBlock
 import space.kscience.kmath.histogram.LongCounter
 import kotlin.math.min
 
-public class NumassAmplitudeSpectrum(public val amplitudes: Map<UShort, ULong>) {
+public class NumassAmplitudeSpectrum(public val amplitudes: Map<Short, ULong>) {
 
-    public val minChannel: UShort by lazy { amplitudes.keys.minOf { it } }
-    public val maxChannel: UShort by lazy { amplitudes.keys.maxOf { it } }
+    public val minChannel: Short by lazy { amplitudes.keys.minOf { it } }
+    public val maxChannel: Short by lazy { amplitudes.keys.maxOf { it } }
 
-    public val channels: UIntRange by lazy { minChannel..maxChannel }
+    public val channels: IntRange by lazy { minChannel..maxChannel }
 
-    public fun binned(binSize: UInt, range: UIntRange = channels): Map<UIntRange, Double> {
+    public fun binned(binSize: UInt, range: IntRange = channels): Map<IntRange, Double> {
         val keys = sequence {
             var left = range.first
             do {
-                val right = min(left + binSize, range.last)
+                val right = min(left + binSize.toInt(), range.last)
                 yield(left..right)
                 left = right
             } while (right < range.last)
@@ -27,7 +27,7 @@ public class NumassAmplitudeSpectrum(public val amplitudes: Map<UShort, ULong>) 
         return keys.associateWith { bin -> amplitudes.filter { it.key in bin }.values.sum().toDouble() }
     }
 
-    public fun sum(range: UIntRange = channels): ULong =
+    public fun sum(range: IntRange = channels): ULong =
         amplitudes.filter { it.key in range }.values.sum()
 }
 
@@ -37,7 +37,7 @@ public class NumassAmplitudeSpectrum(public val amplitudes: Map<UShort, ULong>) 
 public suspend fun NumassBlock.amplitudeSpectrum(
     extractor: NumassEventExtractor = NumassEventExtractor.EVENTS_ONLY,
 ): NumassAmplitudeSpectrum {
-    val map = HashMap<UShort, LongCounter>()
+    val map = HashMap<Short, LongCounter>()
     extractor.extract(this).collect { event ->
         map.getOrPut(event.amplitude) { LongCounter() }.add(1L)
     }
@@ -67,7 +67,7 @@ public suspend fun Collection<NumassBlock>.amplitudeSpectrum(
         if (counter.value == 0L) {
             null
         } else {
-            index.toUShort() to counter.value.toULong()
+            index.toShort() to counter.value.toULong()
         }
     }.toMap()
 

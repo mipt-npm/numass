@@ -22,7 +22,10 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.Instant
 import okio.ByteString
 import org.slf4j.LoggerFactory
-import ru.inr.mass.data.api.*
+import ru.inr.mass.data.api.NumassBlock
+import ru.inr.mass.data.api.NumassEvent
+import ru.inr.mass.data.api.NumassFrame
+import ru.inr.mass.data.api.NumassPoint
 import space.kscience.dataforge.io.Envelope
 import space.kscience.dataforge.meta.*
 import java.io.ByteArrayInputStream
@@ -33,6 +36,11 @@ import java.util.zip.Inflater
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.nanoseconds
+
+public enum class FrameType {
+    DEFAULT,
+    TQDC2021
+}
 
 /**
  * Protobuf based numass point
@@ -45,23 +53,25 @@ internal class ProtoNumassPoint(
 
     val point: Point by lazy(protoBuilder)
 
-    override fun flowBlocks(): Flow<ProtoNumassBlock> {
-        val frameByteOrder = if (meta["tqdc"] != null) {
-            ByteOrder.LITTLE_ENDIAN
-        } else {
-            ByteOrder.BIG_ENDIAN
-        }
+    override val blocks: List<ProtoNumassBlock>
+        get() {
+            val frameByteOrder = if (meta["tqdc"] != null) {
+                ByteOrder.LITTLE_ENDIAN
+            } else {
+                ByteOrder.BIG_ENDIAN
+            }
 
-        return point.channels.flatMap { channel ->
-            channel.blocks
-                .map { block -> ProtoNumassBlock(channel.id.toInt(), block, this, frameByteOrder) }
-                .sortedBy { it.startTime }
-        }.asFlow()
-    }
+            val frameType = if (meta["tqdc"] != null) {
+                FrameType.TQDC2021
+            } else {
+                FrameType.DEFAULT
+            }
 
-    override suspend fun getChannels(): Map<Int, NumassBlock> =
-        point.channels.groupBy { it.id.toInt() }.mapValues { entry ->
-            MetaBlock(entry.value.flatMap { it.blocks }.map { ProtoNumassBlock(entry.key, it, this) })
+            return point.channels.flatMap { channel ->
+                channel.blocks
+                    .map { block -> ProtoNumassBlock(channel.id.toInt(), block, this, frameType) }
+                    .sortedBy { it.startTime }
+            }
         }
 
     override val voltage: Double get() = meta["external_meta.HV1_value"].double ?: super.voltage
@@ -142,7 +152,7 @@ public class ProtoNumassBlock(
     override val channel: Int,
     private val block: Point.Channel.Block,
     private val parent: NumassPoint? = null,
-    private val frameByteOrder: ByteOrder = ByteOrder.BIG_ENDIAN,
+    private val frameType: FrameType = FrameType.DEFAULT,
 ) : NumassBlock {
 
     override val startTime: Instant
@@ -178,7 +188,7 @@ public class ProtoNumassBlock(
             }
 
             amplitudes.zip(times) { amp, time ->
-                NumassEvent(amp.toUShort(), time, this)
+                NumassEvent(amp.toShort(), time, this)
             }.asFlow()
 
         } else {
@@ -187,12 +197,20 @@ public class ProtoNumassBlock(
 
     private fun ByteString.toShortArray(): ShortArray {
         val shortBuffer = asByteBuffer().apply {
-            order(frameByteOrder)
+            when (frameType) {
+                FrameType.DEFAULT -> order(ByteOrder.BIG_ENDIAN)
+                FrameType.TQDC2021 -> order(ByteOrder.LITTLE_ENDIAN)
+            }
         }.asShortBuffer()
-        return if (shortBuffer.hasArray()) {
-            shortBuffer.array()
-        } else {
-            ShortArray(shortBuffer.limit()) { shortBuffer.get(it) }
+        return when (frameType) {
+            FrameType.DEFAULT -> if (shortBuffer.hasArray()) {
+                shortBuffer.array()
+            } else {
+                ShortArray(shortBuffer.limit()) { shortBuffer.get(it) }
+            }
+            FrameType.TQDC2021 -> ShortArray(shortBuffer.limit()){
+                (shortBuffer.get(it).toUShort().toInt() - Short.MAX_VALUE).toShort()
+            }
         }
     }
 

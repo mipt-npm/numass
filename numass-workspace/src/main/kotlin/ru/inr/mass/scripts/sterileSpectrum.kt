@@ -21,7 +21,7 @@ import kotlin.math.pow
 import kotlin.system.measureTimeMillis
 
 fun main() {
-    val spectrum = SterileNeutrinoSpectrum(fss = FSS.default).withNBkg()
+    val spectrum: NBkgSpectrum = SterileNeutrinoSpectrum(fss = FSS.default).withNBkg()
 
     val args: Map<Symbol, Double> = mapOf(
         norm to 8e5,

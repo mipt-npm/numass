@@ -8,7 +8,7 @@ import kotlin.time.DurationUnit
 
 public interface ParentBlock : NumassBlock {
 
-    public fun flowBlocks(): Flow<NumassBlock>
+    public val blocks: List<NumassBlock>
 
     /**
      * If true, the sub-blocks a considered to be sequential, if not, the sub-blocks are parallel
@@ -20,9 +20,7 @@ public interface ParentBlock : NumassBlock {
  * A block constructed from a set of other blocks. Internal blocks are not necessary subsequent. Blocks are automatically sorted.
  * Created by darksnake on 16.07.2017.
  */
-public open class MetaBlock(protected val blocks: List<NumassBlock>) : ParentBlock {
-
-    override fun flowBlocks(): Flow<NumassBlock> = blocks.asFlow()
+public class MetaBlock(override val blocks: List<NumassBlock>) : ParentBlock {
 
     override val startTime: Instant
         get() = blocks.first().startTime
@@ -36,7 +34,7 @@ public open class MetaBlock(protected val blocks: List<NumassBlock>) : ParentBlo
         }
 
     override val frames: Flow<NumassFrame>
-        get() = blocks.sortedBy { it.startTime }.asFlow().flatMapConcat { it.frames }
+        get() = blocks.sortedBy { it.startTime }.asFlow().flatMapMerge { it.frames }
 
     override val eventsCount: Long
         get() = blocks.sumOf { it.eventsCount }

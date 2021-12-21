@@ -17,7 +17,9 @@
 package ru.inr.mass.data.api
 
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.flatMapConcat
 import space.kscience.dataforge.meta.Meta
 import space.kscience.dataforge.meta.double
 import space.kscience.dataforge.meta.get
@@ -35,18 +37,6 @@ public interface NumassPoint : ParentBlock {
     public val meta: Meta
 
     /**
-     * Distinct map of channel number to corresponding grouping block
-     */
-    public suspend fun getChannels(): Map<Int, NumassBlock> =
-        flowBlocks().toList().groupBy { it.channel }.mapValues { entry ->
-            if (entry.value.size == 1) {
-                entry.value.first()
-            } else {
-                MetaBlock(entry.value)
-            }
-        }
-
-    /**
      * Get the voltage setting for the point
      */
     public val voltage: Double get() = meta[HV_KEY].double ?: 0.0
@@ -59,22 +49,22 @@ public interface NumassPoint : ParentBlock {
     /**
      * Get the length key of meta or calculate length as a sum of block lengths. The latter could be a bit slow
      */
-    override suspend fun getLength(): Duration = flowBlocks().filter { it.channel == 0 }.toList()
+    override suspend fun getLength(): Duration = blocks.filter { it.channel == 0 }.toList()
         .sumOf { it.getLength().toLong(DurationUnit.NANOSECONDS) }.nanoseconds
 
     /**
      * Get all events it all blocks as a single sequence
      * Some performance analysis of different stream concatenation approaches is given here: https://www.techempower.com/blog/2016/10/19/efficient-multiple-stream-concatenation-in-java/
      */
-    override val events: Flow<NumassEvent> get() = flowBlocks().flatMapConcat { it.events }
+    override val events: Flow<NumassEvent> get() = blocks.asFlow().flatMapConcat { it.events }
 
     /**
      * Get all frames in all blocks as a single sequence
      */
-    override val frames: Flow<NumassFrame> get() = flowBlocks().flatMapConcat { it.frames }
+    override val frames: Flow<NumassFrame> get() = blocks.asFlow().flatMapConcat { it.frames }
 
 
-    public suspend fun isSequential(): Boolean = getChannels().size == 1
+    public suspend fun isSequential(): Boolean = channels.size == 1
 
     override fun toString(): String
 
@@ -89,6 +79,18 @@ public interface NumassPoint : ParentBlock {
     }
 }
 
+/**
+ * Distinct map of channel number to corresponding grouping block
+ */
+public val NumassPoint.channels: Map<Int, NumassBlock>
+    get() = blocks.groupBy { it.channel }.mapValues { entry ->
+        if (entry.value.size == 1) {
+            entry.value.first()
+        } else {
+            MetaBlock(entry.value)
+        }
+    }
+
 public val NumassPoint.title: String get() = "p$index(HV=$voltage)"
 
 /**
@@ -96,4 +98,4 @@ public val NumassPoint.title: String get() = "p$index(HV=$voltage)"
  *
  */
 public suspend fun NumassPoint.getFirstBlock(): NumassBlock =
-    flowBlocks().firstOrNull() ?: throw RuntimeException("The point is empty")
+    blocks.firstOrNull() ?: throw RuntimeException("The point is empty")

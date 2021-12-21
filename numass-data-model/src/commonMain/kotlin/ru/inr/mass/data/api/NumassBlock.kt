@@ -25,10 +25,10 @@ import kotlinx.datetime.plus
 import kotlin.time.Duration
 
 public open class OrphanNumassEvent(
-    public val amplitude: UShort,
+    public val amplitude: Short,
     public val timeOffset: Long,
 ) : Comparable<OrphanNumassEvent> {
-    public operator fun component1(): UShort = amplitude
+    public operator fun component1(): Short = amplitude
     public operator fun component2(): Long = timeOffset
 
     override fun compareTo(other: OrphanNumassEvent): Int {
@@ -46,7 +46,7 @@ public open class OrphanNumassEvent(
  *
  */
 public class NumassEvent(
-    amplitude: UShort,
+    amplitude: Short,
     timeOffset: Long,
     public val owner: NumassBlock,
 ) : OrphanNumassEvent(amplitude, timeOffset)

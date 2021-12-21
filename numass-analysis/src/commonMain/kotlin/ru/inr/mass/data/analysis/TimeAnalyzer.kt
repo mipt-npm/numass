@@ -39,7 +39,7 @@ public open class TimeAnalyzer(override val extractor: NumassEventExtractor) : N
     ): NumassAnalyzerResult {
         //Parallel processing and merging of parent blocks
         if (block is ParentBlock) {
-            val res = block.flowBlocks().map { analyzeInternal(it, parameters) }.toList()
+            val res = block.blocks.map { analyzeInternal(it, parameters) }.toList()
             return res.combineResults(parameters.t0.averagingMethod)
         }
 

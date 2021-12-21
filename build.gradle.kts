@@ -9,7 +9,7 @@ allprojects {
     }
 
     group = "ru.inr.mass"
-    version = "0.1.0"
+    version = "0.1.1"
 }
 
 val dataforgeVersion by extra("0.5.2")
@@ -20,4 +20,8 @@ val plotlyVersion: String by extra("0.5.0")
 ksciencePublish{
     github("numass")
     space("https://maven.pkg.jetbrains.space/mipt-npm/p/numass/maven")
+}
+
+apiValidation {
+    validationDisabled = true
 }

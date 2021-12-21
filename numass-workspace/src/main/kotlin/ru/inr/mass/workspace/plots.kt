@@ -7,10 +7,7 @@ import ru.inr.mass.data.analysis.NumassAmplitudeSpectrum
 import ru.inr.mass.data.analysis.NumassEventExtractor
 import ru.inr.mass.data.analysis.amplitudeSpectrum
 import ru.inr.mass.data.analysis.timeHistogram
-import ru.inr.mass.data.api.NumassBlock
-import ru.inr.mass.data.api.NumassPoint
-import ru.inr.mass.data.api.NumassSet
-import ru.inr.mass.data.api.title
+import ru.inr.mass.data.api.*
 import ru.inr.mass.data.proto.HVData
 import ru.inr.mass.data.proto.NumassDirectorySet
 import space.kscience.dataforge.values.asValue
@@ -66,7 +63,7 @@ fun Plotly.plotNumassBlock(
     plot {
         runBlocking {
             if (splitChannels && block is NumassPoint) {
-                block.getChannels().forEach { (channel, channelBlock) ->
+                block.channels.forEach { (channel, channelBlock) ->
                     val spectrum = channelBlock.amplitudeSpectrum(eventExtractor)
                     histogram(spectrum, amplitudeBinSize) {
                         name = block.title + "[$channel]"

@@ -5,9 +5,11 @@ import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import ru.inr.mass.data.api.NumassBlock
+import ru.inr.mass.data.api.NumassPoint
 import ru.inr.mass.data.api.NumassSet
 import ru.inr.mass.data.proto.NumassDirectorySet
 import ru.inr.mass.data.proto.readNumassDirectory
+import ru.inr.mass.data.proto.readNumassPointFile
 import space.kscience.dataforge.data.*
 import space.kscience.dataforge.names.Name
 import space.kscience.dataforge.names.NameToken
@@ -20,10 +22,10 @@ import kotlin.io.path.relativeTo
 import kotlin.streams.toList
 
 object Numass {
-    fun readNumassDirectory(path: String): NumassDirectorySet = NUMASS.context.readNumassDirectory(path)
+    fun readDirectory(path: String): NumassDirectorySet = NUMASS.context.readNumassDirectory(path)
 
     @OptIn(ExperimentalPathApi::class)
-    fun readNumassRepository(path: Path): DataTree<NumassDirectorySet> = runBlocking {
+    fun readRepository(path: Path): DataTree<NumassDirectorySet> = runBlocking {
         ActiveDataTree {
             @Suppress("BlockingMethodInNonBlockingContext")
             withContext(Dispatchers.IO) {
@@ -41,7 +43,10 @@ object Numass {
         }
     }
 
-    fun readNumassRepository(path: String): DataTree<NumassDirectorySet> = readNumassRepository(Path.of(path))
+    fun readRepository(path: String): DataTree<NumassDirectorySet> = readRepository(Path.of(path))
+
+    fun readPoint(path: String): NumassPoint = NUMASS.context.readNumassPointFile(path)
+        ?: error("Can't read numass point at $path")
 }
 
 operator fun DataSet<NumassSet>.get(name: String): NumassSet? = runBlocking {

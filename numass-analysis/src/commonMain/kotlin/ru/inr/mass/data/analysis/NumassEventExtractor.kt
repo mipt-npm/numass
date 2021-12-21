@@ -13,25 +13,25 @@ public fun interface NumassEventExtractor {
          * A default event extractor that ignores frames
          */
         public val EVENTS_ONLY: NumassEventExtractor = NumassEventExtractor { it.events }
+
         public val TQDC: NumassEventExtractor = NumassEventExtractor { block ->
             block.frames.map { frame ->
-                var max = 0
-                var min = 0
+                var max = Short.MIN_VALUE
+                var min = Short.MAX_VALUE
                 var indexOfMax = 0
 
-                frame.signal.forEachIndexed { index, sh ->
-                    val corrected = sh.toUShort().toInt() - Short.MAX_VALUE
-                    if (corrected >= max) {
-                        max = corrected
+                frame.signal.forEachIndexed { index, sh: Short ->
+                    if (sh >= max) {
+                        max = sh
                         indexOfMax = index
                     }
-                    if (corrected <= min) {
-                        min = corrected
+                    if (sh <= min) {
+                        min = sh
                     }
                 }
 
                 NumassEvent(
-                    (max - min).toShort().toUShort(),
+                    (max - min).toShort(),
                     frame.timeOffset + frame.tickSize.inWholeNanoseconds * indexOfMax,
                     block
                 )

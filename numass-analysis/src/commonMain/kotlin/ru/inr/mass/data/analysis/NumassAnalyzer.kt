@@ -105,7 +105,7 @@ public abstract class NumassAnalyzer {
         parameters: NumassAnalyzerParameters,
     ): Flow<NumassEvent> {
         val window = parameters.window
-        return extractor.extract(this).filter { it.amplitude in window }
+        return extractor.extract(this).filter { it.amplitude.toUInt() in window }
     }
 
     public companion object {
