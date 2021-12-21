@@ -8,6 +8,7 @@ import ru.inr.mass.data.api.NumassBlock
 import ru.inr.mass.data.api.getTime
 import space.kscience.kmath.histogram.UnivariateHistogram
 import kotlin.math.max
+import kotlin.time.DurationUnit
 
 public fun <T, R> Flow<T>.zipWithNext(block: (l: T, r: T) -> R): Flow<R> {
     var current: T? = null
@@ -26,7 +27,7 @@ public fun NumassBlock.timeHistogram(
     runBlocking {
         extractor.extract(this@timeHistogram).zipWithNext { l, r ->
             if(l.owner == r.owner) {
-                max((r.getTime() - l.getTime()).inWholeMicroseconds,0L)
+                max((r.getTime() - l.getTime()).toDouble(DurationUnit.SECONDS),0.0)
             } else {
                 0
             }

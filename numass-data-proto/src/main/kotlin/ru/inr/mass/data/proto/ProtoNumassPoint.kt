@@ -19,9 +19,7 @@ package ru.inr.mass.data.proto
 import io.ktor.utils.io.core.readBytes
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.runBlocking
-import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.Instant
-import kotlinx.datetime.plus
 import okio.ByteString
 import org.slf4j.LoggerFactory
 import ru.inr.mass.data.api.*
@@ -202,9 +200,9 @@ public class ProtoNumassBlock(
         get() {
             val tickSize = block.bin_size.nanoseconds
             return block.frames.asFlow().map { frame ->
-                val time = startTime.plus(frame.time, DateTimeUnit.NANOSECOND)
+                //val time = startTime.plus(frame.time, DateTimeUnit.NANOSECOND)
                 val frameData = frame.data_
-                NumassFrame(time, tickSize, frameData.toShortArray())
+                NumassFrame(frame.time, tickSize, frameData.toShortArray())
             }
         }
 

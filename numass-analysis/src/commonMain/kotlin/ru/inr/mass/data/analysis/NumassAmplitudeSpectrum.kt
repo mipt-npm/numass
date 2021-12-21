@@ -12,7 +12,9 @@ public class NumassAmplitudeSpectrum(public val amplitudes: Map<UShort, ULong>) 
     public val minChannel: UShort by lazy { amplitudes.keys.minOf { it } }
     public val maxChannel: UShort by lazy { amplitudes.keys.maxOf { it } }
 
-    public fun binned(binSize: UInt, range: UIntRange = minChannel..maxChannel): Map<UIntRange, Double> {
+    public val channels: UIntRange by lazy { minChannel..maxChannel }
+
+    public fun binned(binSize: UInt, range: UIntRange = channels): Map<UIntRange, Double> {
         val keys = sequence {
             var left = range.first
             do {
@@ -24,6 +26,9 @@ public class NumassAmplitudeSpectrum(public val amplitudes: Map<UShort, ULong>) 
 
         return keys.associateWith { bin -> amplitudes.filter { it.key in bin }.values.sum().toDouble() }
     }
+
+    public fun sum(range: UIntRange = channels): ULong =
+        amplitudes.filter { it.key in range }.values.sum()
 }
 
 /**

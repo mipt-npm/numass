@@ -15,9 +15,9 @@ public class TimeAnalyzerParameters : Scheme() {
     /**
      * The relative fraction of events that should be removed by time cut
      */
-    public var crFraction by double()
-    public var min by double(0.0)
-    public var crMin by double(0.0)
+    public var crFraction: Double? by double()
+    public var min: Double by double(0.0)
+    public var crMin: Double by double(0.0)
 
     /**
      * The number of events in chunk to split the chain into. If null, no chunks are used

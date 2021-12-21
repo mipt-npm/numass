@@ -33,7 +33,7 @@ class TestNumassDirectory {
     fun testTQDCRead() = runBlocking {
         val pointPath = Path.of("src/test/resources", "testData/tqdc")
         val set: NumassSet = context.readNumassDirectory(pointPath)
-        val point = set.first { it.voltage == 16000.0 }
+        val point = set.first { it.voltage == 18200.0 }
         point.getChannels().forEach { (channel, block) ->
             println("$channel: $block")
             if(block is ParentBlock){

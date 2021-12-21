@@ -1,19 +1,19 @@
 package ru.inr.mass.scripts
 
-import kotlinx.coroutines.flow.toList
 import kotlinx.html.h2
 import kotlinx.html.p
 import kotlinx.serialization.json.Json
 import ru.inr.mass.workspace.Numass.readNumassDirectory
+import ru.inr.mass.workspace.listFrames
 import space.kscience.dataforge.meta.MetaSerializer
 import space.kscience.plotly.*
 
 suspend fun main() {
     //val repo: DataTree<NumassDirectorySet> = readNumassRepository("D:\\Work\\numass-data\\")
-    val directory = readNumassDirectory("D:\\Work\\numass-data\\set_3\\")
+    val directory = readNumassDirectory("D:\\Work\\Numass\\data\\test\\set_7")
     val point = directory.points.first()
 
-    val frames = point.frames.toList()
+    val frames = point.listFrames()
     Plotly.page {
         p { +"${frames.size} frames" }
         h2 { +"Random frames" }
@@ -23,7 +23,7 @@ suspend fun main() {
             repeat(10) {
                 val frame = frames.random(random)
                 scatter {
-                    y.numbers = frame.signal.map { it.toUShort().toInt() - Short.MAX_VALUE }
+                    y.numbers = frame.signal.map { (it.toUShort().toInt() - Short.MAX_VALUE).toShort() }
                 }
             }
         }
@@ -31,7 +31,7 @@ suspend fun main() {
         plot {
             histogram {
                 name = "max"
-                x.numbers = frames.map { frame -> frame.signal.maxOf { it.toUShort().toInt() - Short.MAX_VALUE } }
+                x.numbers = frames.map { frame -> frame.signal.maxOf { (it.toUShort().toInt() - Short.MAX_VALUE).toShort() } }
             }
 
             histogram {

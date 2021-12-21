@@ -7,7 +7,10 @@ import ru.inr.mass.data.analysis.NumassAmplitudeSpectrum
 import ru.inr.mass.data.analysis.NumassEventExtractor
 import ru.inr.mass.data.analysis.amplitudeSpectrum
 import ru.inr.mass.data.analysis.timeHistogram
+import ru.inr.mass.data.api.NumassBlock
+import ru.inr.mass.data.api.NumassPoint
 import ru.inr.mass.data.api.NumassSet
+import ru.inr.mass.data.api.title
 import ru.inr.mass.data.proto.HVData
 import ru.inr.mass.data.proto.NumassDirectorySet
 import space.kscience.dataforge.values.asValue
@@ -20,6 +23,7 @@ import space.kscience.kmath.structures.Buffer
 import space.kscience.kmath.structures.DoubleBuffer
 import space.kscience.plotly.*
 import space.kscience.plotly.models.*
+import kotlin.time.DurationUnit
 
 /**
  * Plot a kmath histogram
@@ -52,47 +56,89 @@ fun Plot.hvData(data: HVData): Trace = scatter {
     y.numbers = data.map { it.value }
 }
 
-fun Plotly.numassSet(
-    set: NumassSet,
+
+fun Plotly.plotNumassBlock(
+    block: NumassBlock,
     amplitudeBinSize: UInt = 20U,
     eventExtractor: NumassEventExtractor = NumassEventExtractor.EVENTS_ONLY,
-): PlotlyPage =
-    Plotly.page {
-        h1 {
-            +"Numass point set ${ShapeType.path}"
-        }
-        h2 {
-            +"Amplitude spectrum"
-        }
-        plot {
-            runBlocking {
-                set.points.sortedBy { it.index }.forEach {
-                    histogram(it.amplitudeSpectrum(eventExtractor), amplitudeBinSize)
+    splitChannels: Boolean = true
+): PlotlyFragment = Plotly.fragment {
+    plot {
+        runBlocking {
+            if (splitChannels && block is NumassPoint) {
+                block.getChannels().forEach { (channel, channelBlock) ->
+                    val spectrum = channelBlock.amplitudeSpectrum(eventExtractor)
+                    histogram(spectrum, amplitudeBinSize) {
+                        name = block.title + "[$channel]"
+                    }
                 }
-            }
-        }
-
-        h2 {
-            +"Time spectra"
-        }
-        plot {
-            set.points.sortedBy { it.index }.forEach {
-                histogram(it.timeHistogram(1e3))
-            }
-            layout.yaxis.type = AxisType.log
-
-        }
-        if (set is NumassDirectorySet) {
-            set.getHvData()?.let { entries ->
-                h2 {
-                    +"HV"
-                }
-                plot {
-                    hvData(entries)
+            } else {
+                scatter {
+                    val spectrum = block.amplitudeSpectrum(eventExtractor)
+                    histogram(spectrum, amplitudeBinSize)
                 }
             }
         }
     }
+}
+
+fun Plotly.plotNumassSet(
+    set: NumassSet,
+    amplitudeBinSize: UInt = 20U,
+    eventExtractor: NumassEventExtractor = NumassEventExtractor.EVENTS_ONLY,
+): PlotlyFragment = Plotly.fragment {
+
+    h1 { +"Numass point set ${(set as? NumassDirectorySet)?.path ?: ""}" }
+
+    //TODO do in parallel
+    val spectra = runBlocking {
+        set.points.sortedBy { it.index }.map { it to it.amplitudeSpectrum(eventExtractor) }
+    }
+
+    h2 { +"Amplitude spectrum" }
+
+    plot {
+        spectra.forEach { (point, spectrum) ->
+            histogram(spectrum, amplitudeBinSize) {
+                name = point.title
+            }
+        }
+    }
+
+    h2 { +"Time spectra" }
+
+    plot {
+        spectra.forEach { (point,spectrum) ->
+            val countRate = runBlocking {
+                spectrum.sum().toDouble() / point.getLength().toDouble(DurationUnit.SECONDS)
+            }
+            val binSize = 1.0 / countRate  / 10.0
+            histogram(point.timeHistogram(binSize)) {
+                name = point.title
+            }
+        }
+        layout.yaxis.type = AxisType.log
+    }
+
+    h2 { +"Integral spectrum" }
+
+    plot {
+        scatter {
+            mode = ScatterMode.markers
+            x.numbers = spectra.map { it.first.voltage }
+            y.numbers = spectra.map { it.second.sum().toLong() }
+        }
+    }
+
+    if (set is NumassDirectorySet) {
+        set.getHvData()?.let { entries ->
+            h2 { +"HV" }
+            plot {
+                hvData(entries)
+            }
+        }
+    }
+}
 
 /**
  * Add a number buffer accessor for Plotly trace values

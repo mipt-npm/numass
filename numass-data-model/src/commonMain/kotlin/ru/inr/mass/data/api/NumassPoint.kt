@@ -89,6 +89,8 @@ public interface NumassPoint : ParentBlock {
     }
 }
 
+public val NumassPoint.title: String get() = "p$index(HV=$voltage)"
+
 /**
  * Get the first block if it exists. Throw runtime exception otherwise.
  *

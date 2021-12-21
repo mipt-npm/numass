@@ -1,8 +1,10 @@
 package ru.inr.mass.workspace
 
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import ru.inr.mass.data.api.NumassBlock
 import ru.inr.mass.data.api.NumassSet
 import ru.inr.mass.data.proto.NumassDirectorySet
 import ru.inr.mass.data.proto.readNumassDirectory
@@ -45,3 +47,7 @@ object Numass {
 operator fun DataSet<NumassSet>.get(name: String): NumassSet? = runBlocking {
     getData(Name.parse(name))?.await()
 }
+
+fun NumassBlock.listFrames() = runBlocking { frames.toList() }
+
+fun NumassBlock.listEvents() = runBlocking { events.toList() }

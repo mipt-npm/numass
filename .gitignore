@@ -4,6 +4,6 @@
 out/
 .gradle
 build/
-
+/notebooks/.ipynb_checkpoints
 
 !gradle-wrapper.jar
