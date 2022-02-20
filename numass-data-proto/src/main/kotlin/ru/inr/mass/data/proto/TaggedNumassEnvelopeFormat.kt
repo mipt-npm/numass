@@ -103,7 +103,7 @@ public class TaggedNumassEnvelopeFormat(private val io: IOPlugin) : EnvelopeForm
         IOFormat.NAME_KEY put name.toString()
     }
 
-    companion object : EnvelopeFormatFactory {
+    public companion object : EnvelopeFormatFactory {
         private const val START_SEQUENCE = "#!"
         private const val END_SEQUENCE = "!#\r\n"
 

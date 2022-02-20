@@ -1,5 +1,9 @@
 package ru.inr.mass.scripts
 
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.runBlocking
 import kotlinx.html.h2
 import kotlinx.html.p
 import kotlinx.serialization.json.Json
@@ -23,6 +27,10 @@ fun NumassFrame.tqdcAmplitude(): Short {
     }
 
     return (max - min).toShort()
+}
+
+fun Flow<NumassFrame>.tqdcAmplitudes(): List<Short> = runBlocking {
+    map { it.tqdcAmplitude() }.toList()
 }
 
 suspend fun main() {
