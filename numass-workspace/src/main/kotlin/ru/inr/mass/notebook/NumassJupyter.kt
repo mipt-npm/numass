@@ -1,6 +1,9 @@
 package ru.inr.mass.notebook
 
 
+import kotlinx.coroutines.runBlocking
+import kotlinx.html.*
+import kotlinx.html.stream.createHTML
 import org.jetbrains.kotlinx.jupyter.api.HTML
 import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterIntegration
 import ru.inr.mass.data.api.NumassBlock
@@ -11,6 +14,7 @@ import ru.inr.mass.workspace.Numass
 import ru.inr.mass.workspace.plotNumassBlock
 import ru.inr.mass.workspace.plotNumassSet
 import space.kscience.dataforge.data.DataTree
+import space.kscience.dataforge.data.DataTreeItem
 import space.kscience.plotly.Plotly
 import space.kscience.plotly.scatter
 import space.kscience.plotly.toHTML
@@ -56,7 +60,23 @@ internal class NumassJupyter : JupyterIntegration() {
         }
 
         render<DataTree<NumassDirectorySet>> { tree ->
-            HTML("TODO: render repository tree")
+            HTML(createHTML().div { numassTree(tree)})
+        }
+    }
+}
+
+private fun FlowContent.numassTree(tree: DataTree<NumassDirectorySet>) {
+    ul {
+        runBlocking {
+            tree.items().forEach { (token, treeItem) ->
+                li {
+                    p { +token.toString() }
+                    when (treeItem) {
+                        is DataTreeItem.Leaf -> {}
+                        is DataTreeItem.Node -> numassTree(treeItem.tree)
+                    }
+                }
+            }
         }
     }
 }
