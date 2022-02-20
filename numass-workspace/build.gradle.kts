@@ -9,7 +9,7 @@ kotlin {
 }
 
 val dataforgeVersion: String by rootProject.extra
-val plotlyVersion: String by rootProject.extra
+val plotlyVersion: String by rootProject.extra("0.5.0")
 val kmathVersion: String by rootProject.extra
 val tablesVersion: String by rootProject.extra
 

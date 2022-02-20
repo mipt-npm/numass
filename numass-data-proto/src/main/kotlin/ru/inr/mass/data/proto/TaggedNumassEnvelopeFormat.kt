@@ -27,7 +27,7 @@ import space.kscience.dataforge.names.plus
 import java.util.*
 
 
-internal class TaggedNumassEnvelopeFormat(private val io: IOPlugin) : EnvelopeFormat {
+public class TaggedNumassEnvelopeFormat(private val io: IOPlugin) : EnvelopeFormat {
 
     private fun Tag.toBinary() = Binary(24) {
         writeRawString(START_SEQUENCE)
