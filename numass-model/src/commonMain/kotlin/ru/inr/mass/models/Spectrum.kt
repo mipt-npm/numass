@@ -30,6 +30,14 @@ public fun interface Kernel : Expression<Double> {
 
 public interface DifferentiableKernel : SpecialDifferentiableExpression<Double, Kernel>, Kernel
 
+public fun Kernel.withFixedX(x: Double): Spectrum = Spectrum { y, arguments ->
+    invoke(x, y, arguments)
+}
+
+public fun Kernel.withFixedY(y: Double): Spectrum = Spectrum { x, arguments ->
+    invoke(x, y, arguments)
+}
+
 public fun <T> Expression<T>.withDefault(default: Map<Symbol, T>): Expression<T> = Expression { args ->
     invoke(default + args)
 }
