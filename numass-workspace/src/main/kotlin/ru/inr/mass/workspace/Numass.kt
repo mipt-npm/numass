@@ -24,7 +24,6 @@ import kotlin.streams.toList
 object Numass {
     fun readDirectory(path: String): NumassDirectorySet = NUMASS.context.readNumassDirectory(path)
 
-    @OptIn(ExperimentalPathApi::class)
     fun readRepository(path: Path): DataTree<NumassDirectorySet> = runBlocking {
         ActiveDataTree {
             @Suppress("BlockingMethodInNonBlockingContext")

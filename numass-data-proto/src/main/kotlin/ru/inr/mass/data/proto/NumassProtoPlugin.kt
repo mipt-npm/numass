@@ -21,7 +21,7 @@ public class NumassProtoPlugin : AbstractPlugin() {
     }
 
     public companion object : PluginFactory<NumassProtoPlugin> {
-        override fun invoke(meta: Meta, context: Context): NumassProtoPlugin = NumassProtoPlugin()
+        override fun build(context: Context, meta: Meta): NumassProtoPlugin = NumassProtoPlugin()
         override val tag: PluginTag = PluginTag("numass-proto", group = "ru.inr.mass")
         override val type: KClass<out NumassProtoPlugin> = NumassProtoPlugin::class
     }

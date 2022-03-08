@@ -19,7 +19,6 @@ import java.nio.file.Path
 import kotlin.io.path.*
 import kotlin.streams.toList
 
-@OptIn(ExperimentalPathApi::class)
 public class NumassDirectorySet internal constructor(
     public val context: Context,
     public val path: Path,

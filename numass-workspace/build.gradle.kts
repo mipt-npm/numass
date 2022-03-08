@@ -21,6 +21,9 @@ dependencies {
     implementation("space.kscience:plotlykt-jupyter:$plotlyVersion")
     implementation("space.kscience:kmath-jupyter:$kmathVersion")
     implementation("space.kscience:tables-kt:$tablesVersion")
+    implementation(platform("com.google.cloud:libraries-bom:23.0.0"))
+    implementation("com.google.cloud:google-cloud-nio:0.123.10")
+    implementation("com.google.auth:google-auth-library-oauth2-http:1.3.0")
 }
 
 kscience{

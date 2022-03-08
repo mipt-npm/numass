@@ -10,6 +10,7 @@ val dataforgeVersion: String by rootProject.extra
 dependencies {
     api(project(":numass-data-model"))
     api("space.kscience:dataforge-io:$dataforgeVersion")
+    api(npmlibs.ktor.io)
 }
 
 wire{
