@@ -1,8 +1,10 @@
 package ru.inr.mass.scripts
 
 import ru.inr.mass.data.analysis.NumassEventExtractor
-import ru.inr.mass.data.analysis.amplitudeSpectrum
+import ru.inr.mass.data.analysis.energySpectrum
+import ru.inr.mass.data.api.NumassEvent
 import ru.inr.mass.data.api.NumassPoint
+import ru.inr.mass.data.api.channel
 import ru.inr.mass.data.proto.NumassDirectorySet
 import ru.inr.mass.models.*
 import ru.inr.mass.workspace.Numass
@@ -38,6 +40,30 @@ fun Spectrum.convolve(range: ClosedRange<Double>, function: (Double) -> Double):
     }.value
 }
 
+/**
+ * E = A * ADC +B
+ * Channel A       B
+ * 0	0.01453	1.3
+ * 2	0.01494	-4.332
+ * 3	0.01542	-5.183
+ * 4	0.01573	-2.115
+ * 5	0.0152	-3.808
+ * 6	0.0155	-3.015
+ * 7	0.01517	-0.5429
+ */
+val calibration: (NumassEvent) -> Double = {
+    when (it.channel) {
+        0 -> 0.01453 * it.amplitude + 1.3
+        2 -> 0.01494 * it.amplitude - 5.183
+        3 -> 0.01542 * it.amplitude - 5.183
+        4 -> 0.01573 * it.amplitude - 2.115
+        5 -> 0.0152 * it.amplitude - 3.808
+        6 -> 0.0155 * it.amplitude - 3.015
+        7 -> 0.01517 * it.amplitude - 0.5429
+        else -> error("Unrecognized channel ${it.channel}")
+    } * 1000.0
+}
+
 private val neutrinoSpectrum = NumassBeta.withFixedX(0.0)
 
 private val args: Map<Symbol, Double> = mapOf(
@@ -65,20 +91,21 @@ suspend fun main() {
         point
     }
 
-    val spectrum: Map<Short, ULong> = points.values.first()!!
-        .amplitudeSpectrum(NumassEventExtractor.TQDC)
-        .amplitudes.toSortedMap()
+    val spectrum: Map<Double, Long> = points.values.first()!!
+        .energySpectrum(NumassEventExtractor.TQDC, calibration)
+        .filter { it.key > 9000.0 }
+        .toSortedMap()
 
-    //the channel of spectrum peak position
-    val argmax = spectrum.maxByOrNull { it.value }!!.key
-
-    // convert channel to energy
-    fun Short.toEnergy(): Double = toDouble() / argmax * gunEnergy
+//    //the channel of spectrum peak position
+//    val argmax = spectrum.maxByOrNull { it.value }!!.key
+//
+//    // convert channel to energy
+//    fun Short.toEnergy(): Double = toDouble() / argmax * gunEnergy
 
     val norm = spectrum.values.sum().toDouble()
 
     val interpolated: PiecewisePolynomial<Double> = LinearInterpolator(DoubleField).interpolatePolynomials(
-        spectrum.keys.map { it.toEnergy() - gunEnergy }.asBuffer(),
+        spectrum.keys.map { it - gunEnergy }.asBuffer(),
         spectrum.values.map { it.toDouble() / norm }.asBuffer()
     )
 
@@ -93,7 +120,7 @@ suspend fun main() {
     Plotly.plot {
         scatter {
             name = "gun"
-            x.numbers = spectrum.keys.map { it.toEnergy() }
+            x.numbers = spectrum.keys
             y.numbers = spectrum.values.map { it.toDouble() / norm }
         }
 
@@ -101,15 +128,17 @@ suspend fun main() {
             name = "convoluted"
             x.buffer = 0.0..19000.0 step 100.0
             y.numbers = x.doubles.map { model(it, args) }
-            y.numbers = y.doubles.map { it / y.doubles.maxOrNull()!! }
+            val yNorm = y.doubles.maxOrNull()!!
+            y.numbers = y.doubles.map { it / yNorm }
         }
 
         scatter {
             name = "tritium"
-            val tritiumSpectrum = tritiumData.amplitudeSpectrum(NumassEventExtractor.TQDC).amplitudes.toSortedMap()
-            x.numbers = tritiumSpectrum.keys.map { it.toEnergy() }
-            y.numbers = tritiumSpectrum.values.map { it.toDouble()}
-            y.numbers = y.doubles.map { it / y.doubles.maxOrNull()!! }
+            val tritiumSpectrum = tritiumData.energySpectrum(NumassEventExtractor.TQDC, calibration).toSortedMap()
+            x.numbers = tritiumSpectrum.keys
+            y.numbers = tritiumSpectrum.values.map { it.toDouble() }
+            val yNorm = y.doubles.maxOrNull()!!
+            y.numbers = y.doubles.map { it / yNorm }
         }
     }.makeFile()
 }

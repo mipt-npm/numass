@@ -1,9 +1,9 @@
 package ru.inr.mass.data.analysis
 
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import ru.inr.mass.data.api.NumassBlock
+import ru.inr.mass.data.api.NumassEvent
 import space.kscience.kmath.histogram.LongCounter
 import kotlin.math.min
 
@@ -42,6 +42,17 @@ public suspend fun NumassBlock.amplitudeSpectrum(
         map.getOrPut(event.amplitude) { LongCounter() }.add(1L)
     }
     return NumassAmplitudeSpectrum(map.mapValues { it.value.value.toULong() })
+}
+
+public suspend fun NumassBlock.energySpectrum(
+    extractor: NumassEventExtractor = NumassEventExtractor.EVENTS_ONLY,
+    calibration: (NumassEvent) -> Double,
+): Map<Double, Long> {
+    val map = HashMap<Double, LongCounter>()
+    extractor.extract(this).collect { event ->
+        map.getOrPut(calibration(event)) { LongCounter() }.add(1L)
+    }
+    return map.mapValues { it.value.value }
 }
 
 /**
