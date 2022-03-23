@@ -14,7 +14,7 @@ allprojects {
 
 val dataforgeVersion by extra("0.5.2")
 val tablesVersion: String by extra("0.1.2")
-val kmathVersion by extra("0.3.0-dev-17")
+val kmathVersion by extra("0.3.0-dev-18")
 val plotlyVersion: String by extra("0.5.0")
 
 ksciencePublish{

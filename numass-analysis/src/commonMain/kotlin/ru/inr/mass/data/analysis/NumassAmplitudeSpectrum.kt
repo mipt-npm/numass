@@ -55,6 +55,14 @@ public suspend fun NumassBlock.energySpectrum(
     return map.mapValues { it.value.value }
 }
 
+public suspend fun NumassBlock.eventsCount(extractor: NumassEventExtractor = NumassEventExtractor.EVENTS_ONLY): Long {
+    var counter: Long = 0L
+    extractor.extract(this).collect {
+        counter++
+    }
+    return counter
+}
+
 /**
  * Collect events from block in parallel
  */
