@@ -20,6 +20,9 @@ import io.ktor.utils.io.core.readBytes
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toInstant
 import okio.ByteString
 import org.slf4j.LoggerFactory
 import ru.inr.mass.data.api.NumassBlock
@@ -28,6 +31,9 @@ import ru.inr.mass.data.api.NumassFrame
 import ru.inr.mass.data.api.NumassPoint
 import space.kscience.dataforge.io.Envelope
 import space.kscience.dataforge.meta.*
+import space.kscience.dataforge.values.ValueType
+import space.kscience.dataforge.values.long
+import space.kscience.dataforge.values.string
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
@@ -79,9 +85,16 @@ internal class ProtoNumassPoint(
     override val index: Int get() = meta["external_meta.point_index"].int ?: super.index
 
     override val startTime: Instant
-        get() = meta["start_time"].long?.let {
-            Instant.fromEpochMilliseconds(it)
-        } ?: Instant.DISTANT_PAST
+        get() {
+            val startTimeValue = meta["start_time"]?.value
+            return when{
+                startTimeValue == null -> Instant.DISTANT_PAST
+                startTimeValue.type == ValueType.STRING -> LocalDateTime.parse(startTimeValue.string).toInstant(TimeZone.UTC)
+                //TODO fix time zones!!!
+                startTimeValue.type == ValueType.NUMBER -> Instant.fromEpochMilliseconds(startTimeValue.long)
+                else -> error("Can't decode start time")
+            }
+        }
 
     override suspend fun getLength(): Duration = meta["acquisition_time"].double?.let {
         (it * 1000).milliseconds

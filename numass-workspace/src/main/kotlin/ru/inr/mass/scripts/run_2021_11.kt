@@ -1,13 +1,18 @@
 package ru.inr.mass.scripts
 
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
+import kotlinx.html.code
 import kotlinx.html.h2
 import kotlinx.html.p
+import kotlinx.html.unsafe
 import kotlinx.serialization.json.Json
 import ru.inr.mass.data.analysis.NumassEventExtractor
 import ru.inr.mass.data.analysis.amplitudeSpectrum
 import ru.inr.mass.data.api.NumassFrame
 import ru.inr.mass.data.api.channels
+import ru.inr.mass.workspace.Numass.readDirectory
 import ru.inr.mass.workspace.Numass.readPoint
 import ru.inr.mass.workspace.listFrames
 import space.kscience.dataforge.meta.MetaSerializer
@@ -63,7 +68,7 @@ suspend fun main() {
                 val spectrum = runBlocking {
                     channel.amplitudeSpectrum(NumassEventExtractor.EVENTS_ONLY)
                 }.binned(binning)
-                x.numbers = spectrum.keys.map { it.center }
+                x.numbers = spectrum.keys.map {  it.center }
                 y.numbers = spectrum.values.map { it }
             }
 
@@ -73,7 +78,7 @@ suspend fun main() {
                     channel.amplitudeSpectrum(NumassEventExtractor.TQDC)
                 }.binned(binning)
                 x.numbers = spectrum.keys.map { it.center }
-                y.numbers = spectrum.values.map { it }
+                y.numbers = spectrum.values.map { it}
             }
 
             scatter {
@@ -84,9 +89,20 @@ suspend fun main() {
                 x.numbers = spectrum.keys.map { it.center }
                 y.numbers = spectrum.values.map { it }
             }
+            histogram {
+                name = "events"
+                xbins {
+                    size = 2.0
+                }
+                x.numbers = runBlocking { point.events.map { it.amplitude.toInt() }.toList() }
+            }
         }
         h2 { +"Meta" }
-        p { +Json.encodeToString(MetaSerializer, point.meta) }
+        code {
+            unsafe {
+                +Json { prettyPrint = true }.encodeToString(MetaSerializer, point.meta)
+            }
+        }
     }.makeFile()
 
 
