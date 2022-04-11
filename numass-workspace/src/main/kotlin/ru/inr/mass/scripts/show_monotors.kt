@@ -7,7 +7,7 @@ import space.kscience.plotly.makeFile
 import space.kscience.plotly.scatter
 
 fun main() {
-    val directory = Numass.readDirectory("D:\\Work\\numass-data\\set_3\\")
+    val directory = Numass.readDirectory("D:\\Work\\Numass\\data\\test\\set_7\\")
 
     val monitorPoints: List<NumassPoint> = directory.filter { it.voltage == 14000.0 }.sortedBy { it.startTime  }
 
