@@ -7,8 +7,8 @@ package ru.inr.mass.models
 
 import space.kscience.kmath.expressions.Symbol
 import space.kscience.kmath.expressions.symbol
+import space.kscience.kmath.functions.Function1D
 import space.kscience.kmath.functions.PiecewisePolynomial
-import space.kscience.kmath.functions.UnivariateFunction
 import space.kscience.kmath.functions.asFunction
 import space.kscience.kmath.integration.*
 import space.kscience.kmath.operations.DoubleField
@@ -84,7 +84,7 @@ public class NumassTransmission(
         public val trap: Symbol by symbol
         public val thickness: Symbol by symbol
 
-        private val cache = HashMap<Int, UnivariateFunction<Double>>()
+        private val cache = HashMap<Int, Function1D<Double>>()
 
         private const val ION_POTENTIAL = 15.4//eV
 
@@ -130,7 +130,7 @@ public class NumassTransmission(
             return exp(-x)
         }
 
-        private fun getCachedSpectrum(order: Int): UnivariateFunction<Double> {
+        private fun getCachedSpectrum(order: Int): Function1D<Double> {
             return when {
                 order <= 0 -> error("Non-positive loss cache order")
                 order == 1 -> singleScatterFunction
@@ -147,7 +147,7 @@ public class NumassTransmission(
          * @param order
          * @return
          */
-        private fun getLoss(order: Int): UnivariateFunction<Double> = getCachedSpectrum(order)
+        private fun getLoss(order: Int): Function1D<Double> = getCachedSpectrum(order)
 
         private fun getLossProbDerivs(x: Double): List<Double> {
             val res = ArrayList<Double>()
@@ -260,7 +260,7 @@ public class NumassTransmission(
          * @return
          */
         @Synchronized
-        private fun getNextLoss(margin: Double, loss: UnivariateFunction<Double>): PiecewisePolynomial<Double> {
+        private fun getNextLoss(margin: Double, loss: Function1D<Double>): PiecewisePolynomial<Double> {
             val res = { x: Double ->
                 DoubleField.simpsonIntegrator.integrate(5.0..margin, IntegrandMaxCalls(200)) { y ->
                     loss(x - y) * singleScatterFunction(y)
@@ -324,7 +324,7 @@ public class NumassTransmission(
         private val w1 = 1.85
         private val w2 = 12.5
 
-        public val singleScatterFunction: UnivariateFunction<Double> = { eps: Double ->
+        public val singleScatterFunction: Function1D<Double> = { eps: Double ->
             when {
                 eps <= 0 -> 0.0
                 eps <= b -> {

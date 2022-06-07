@@ -5,8 +5,8 @@ import space.kscience.kmath.functions.asFunction
 import space.kscience.kmath.integration.integrate
 import space.kscience.kmath.integration.splineIntegrator
 import space.kscience.kmath.integration.value
-import space.kscience.kmath.interpolation.SplineInterpolator
 import space.kscience.kmath.interpolation.interpolatePolynomials
+import space.kscience.kmath.interpolation.splineInterpolator
 import space.kscience.kmath.operations.DoubleField
 import space.kscience.kmath.real.step
 import space.kscience.plotly.Plotly
@@ -28,7 +28,7 @@ fun main() {
             Pair(e.toDouble(), p.toDouble())
         }.toList()
 
-    val interpolated = SplineInterpolator.double
+    val interpolated = DoubleField.splineInterpolator
         .interpolatePolynomials(backScatteringSpectrum)
         .asFunction(DoubleField, 0.0)
 

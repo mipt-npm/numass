@@ -12,8 +12,8 @@ import ru.inr.mass.data.proto.HVData
 import ru.inr.mass.data.proto.NumassDirectorySet
 import space.kscience.dataforge.values.asValue
 import space.kscience.dataforge.values.double
-import space.kscience.kmath.histogram.UnivariateHistogram
-import space.kscience.kmath.histogram.center
+import space.kscience.kmath.domains.center
+import space.kscience.kmath.histogram.Histogram1D
 import space.kscience.kmath.misc.UnstableKMathAPI
 import space.kscience.kmath.operations.asIterable
 import space.kscience.kmath.structures.Buffer
@@ -26,9 +26,9 @@ import kotlin.time.DurationUnit
  * Plot a kmath histogram
  */
 @OptIn(UnstableKMathAPI::class)
-fun Plot.histogram(histogram: UnivariateHistogram, block: Scatter.() -> Unit = {}): Trace = scatter {
+fun Plot.histogram(histogram: Histogram1D<Double, Double>, block: Scatter.() -> Unit = {}): Trace = scatter {
     x.numbers = histogram.bins.map { it.domain.center }
-    y.numbers = histogram.bins.map { it.value }
+    y.numbers = histogram.bins.map { it.binValue }
     line.shape = LineShape.hv
     block()
 }
@@ -58,7 +58,7 @@ fun Plotly.plotNumassBlock(
     block: NumassBlock,
     amplitudeBinSize: UInt = 20U,
     eventExtractor: NumassEventExtractor = NumassEventExtractor.EVENTS_ONLY,
-    splitChannels: Boolean = true
+    splitChannels: Boolean = true,
 ): PlotlyFragment = Plotly.fragment {
     plot {
         runBlocking {
@@ -105,11 +105,11 @@ fun Plotly.plotNumassSet(
     h2 { +"Time spectra" }
 
     plot {
-        spectra.forEach { (point,spectrum) ->
+        spectra.forEach { (point, spectrum) ->
             val countRate = runBlocking {
                 spectrum.sum().toDouble() / point.getLength().toDouble(DurationUnit.SECONDS)
             }
-            val binSize = 1.0 / countRate  / 10.0
+            val binSize = 1.0 / countRate / 10.0
             histogram(point.timeHistogram(binSize)) {
                 name = point.title
             }

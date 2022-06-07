@@ -1,7 +1,5 @@
 package ru.inr.mass.scripts
 
-import kotlinx.datetime.DateTimeUnit
-import kotlinx.datetime.plus
 import ru.inr.mass.data.api.NumassBlock
 import ru.inr.mass.data.api.channels
 import ru.inr.mass.workspace.Numass
@@ -29,8 +27,9 @@ fun main() {
     channels.forEach { (key, block) ->
         targetDir.resolve("channel-$key.csv").write {
             block.listFrames().forEach { frame ->
-                val frameTime =  pointTime.plus(frame.timeOffset, DateTimeUnit.NANOSECOND)
-                writeUtf8String("$frameTime,")
+//                val frameTime =  pointTime.plus(frame.timeOffset, DateTimeUnit.NANOSECOND)
+//                writeUtf8String("$frameTime,")
+                writeUtf8String("${frame.timeOffset},")
                 val line = frame.signal.joinToString(",", postfix = "\n" )
                 writeUtf8String(line)
             }

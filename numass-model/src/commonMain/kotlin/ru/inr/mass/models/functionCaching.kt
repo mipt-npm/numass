@@ -1,15 +1,15 @@
 package ru.inr.mass.models
 
 
+import space.kscience.kmath.functions.Function1D
 import space.kscience.kmath.functions.PiecewisePolynomial
-import space.kscience.kmath.functions.UnivariateFunction
 import space.kscience.kmath.interpolation.SplineInterpolator
 import space.kscience.kmath.interpolation.interpolatePolynomials
 import space.kscience.kmath.operations.DoubleField
 import space.kscience.kmath.structures.DoubleBuffer
 import kotlin.math.abs
 
-public fun UnivariateFunction<Double>.cache(
+public fun Function1D<Double>.cache(
     range: ClosedFloatingPointRange<Double>,
     numCachePoints: Int,
 ): PiecewisePolynomial<Double> {
